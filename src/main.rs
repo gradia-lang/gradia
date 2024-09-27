@@ -73,6 +73,15 @@ fn main() {
             "!".to_string(),
             Type::Function(|params| Some(Type::Bool(!params.get(0)?.get_bool()))),
         ),
+        (
+            "cast".to_string(),
+            Type::Function(|params| match params[1].get_string().as_str() {
+                "number" => Some(Type::Number(params[0].get_number())),
+                "string" => Some(Type::String(params[0].get_string())),
+                "bool" => Some(Type::Bool(params[0].get_bool())),
+                _ => Some(params[0].clone()),
+            }),
+        ),
         ("exit".to_string(), Type::Function(|_| exit(0))),
     ]);
 
