@@ -82,6 +82,10 @@ fn main() {
                 _ => Some(params[0].clone()),
             }),
         ),
+        (
+            "type".to_string(),
+            Type::Function(|params| Some(Type::String(params[0].get_type()))),
+        ),
         ("exit".to_string(), Type::Function(|_| exit(0))),
     ]);
 
