@@ -80,7 +80,7 @@ fn main() {
     loop {
         let program = parse_expr(input("> "));
         if let Some(result) = program.eval(scope.clone()) {
-            println!("{result:?}",);
+            println!("{}", result.display());
         }
     }
 }
@@ -275,6 +275,11 @@ impl Expr {
             if discriminant(&result) == discriminant(&annotate) {
                 Some(result)
             } else {
+                eprintln!(
+                    "Error! the result value `{}` is different to expected type `{}` ",
+                    result.display(),
+                    annotate.get_type()
+                );
                 None
             }
         } else {
@@ -330,5 +335,22 @@ impl Type {
             Type::Bool(b) => *b,
             Type::Function(_) | Type::Null => false,
         }
+    }
+
+    fn get_type(&self) -> String {
+        match &self {
+            Type::Number(_) => "number".to_string(),
+            Type::String(_) => "string".to_string(),
+            Type::Bool(_) => "bool".to_string(),
+            Type::Expr(_) => "expr".to_string(),
+            Type::Variable(_) => "variable".to_string(),
+            Type::Null => "null".to_string(),
+            Type::Function(_) => "function".to_string(),
+        }
+    }
+
+    fn display(&self) -> String {
+        let display: Vec<String> = format!("{self:?}").chars().map(|c| c.to_string()).collect();
+        display[0].to_lowercase() + &display[1..].join("")
     }
 }
