@@ -120,6 +120,11 @@ fn parse_expr(source: String) -> Expr {
                 expr: Type::Bool(b),
                 annotate,
             });
+        } else if token[0] == "null".to_string() {
+            expr.push(Expr {
+                expr: Type::Null,
+                annotate,
+            });
         } else if token[0].starts_with('"') && token[0].ends_with('"') {
             let mut string = token[0].clone();
             string.remove(0);
