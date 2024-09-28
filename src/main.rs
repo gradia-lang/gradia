@@ -138,6 +138,20 @@ fn main() {
             })),
         ),
         (
+            "lambda".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                Some(Type::Function(Function::UserDefined(
+                    params
+                        .get(0)?
+                        .get_list()
+                        .iter()
+                        .map(|i| i.expr.get_string())
+                        .collect::<Vec<String>>(),
+                    params.get(1..)?.to_vec(),
+                )))
+            })),
+        ),
+        (
             "exit".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 exit(params.get(0)?.get_number() as i32)
