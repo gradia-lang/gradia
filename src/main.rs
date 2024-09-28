@@ -8,91 +8,99 @@ fn main() {
     let scope = &mut HashMap::from([
         (
             "+".to_string(),
-            Type::Function(|params, _| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::Number(
                     params.get(0)?.get_number() + params.get(1)?.get_number(),
                 ))
-            }),
+            })),
         ),
         (
             "-".to_string(),
-            Type::Function(|params, _| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::Number(
                     params.get(0)?.get_number() - params.get(1)?.get_number(),
                 ))
-            }),
+            })),
         ),
         (
             "*".to_string(),
-            Type::Function(|params, _| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::Number(
                     params.get(0)?.get_number() * params.get(1)?.get_number(),
                 ))
-            }),
+            })),
         ),
         (
             "/".to_string(),
-            Type::Function(|params, _| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::Number(
                     params.get(0)?.get_number() / params.get(1)?.get_number(),
                 ))
-            }),
+            })),
         ),
         (
             "concat".to_string(),
-            Type::Function(|params, _| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::String(
                     params.get(0)?.get_string() + &params.get(1)?.get_string(),
                 ))
-            }),
+            })),
         ),
         (
             "print".to_string(),
-            Type::Function(|params, _| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 println!("{}", params.get(0)?.get_string());
                 Some(Type::Null)
-            }),
+            })),
         ),
         (
             "&".to_string(),
-            Type::Function(|params, _| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::Bool(
                     params.get(0)?.get_bool() & params.get(1)?.get_bool(),
                 ))
-            }),
+            })),
         ),
         (
             "|".to_string(),
-            Type::Function(|params, _| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::Bool(
                     params.get(0)?.get_bool() | params.get(1)?.get_bool(),
                 ))
-            }),
+            })),
         ),
         (
             "!".to_string(),
-            Type::Function(|params, _| Some(Type::Bool(!params.get(0)?.get_bool()))),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Bool(!params.get(0)?.get_bool()))
+            })),
         ),
         (
             "cast".to_string(),
-            Type::Function(|params, _| match params.get(1)?.get_string().as_str() {
-                "number" => Some(Type::Number(params.get(0)?.get_number())),
-                "string" => Some(Type::String(params.get(0)?.get_string())),
-                "bool" => Some(Type::Bool(params.get(0)?.get_bool())),
-                _ => Some(params.get(0)?.clone()),
-            }),
+            Type::Function(Function::BuiltIn(|params, _| {
+                match params.get(1)?.get_string().as_str() {
+                    "number" => Some(Type::Number(params.get(0)?.get_number())),
+                    "string" => Some(Type::String(params.get(0)?.get_string())),
+                    "bool" => Some(Type::Bool(params.get(0)?.get_bool())),
+                    _ => Some(params.get(0)?.clone()),
+                }
+            })),
         ),
         (
             "type".to_string(),
-            Type::Function(|params, _| Some(Type::String(params.get(0)?.get_type()))),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::String(params.get(0)?.get_type()))
+            })),
         ),
         (
             "input".to_string(),
-            Type::Function(|params, _| Some(Type::String(input(&params.get(0)?.get_string())))),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::String(input(&params.get(0)?.get_string())))
+            })),
         ),
         (
             "eval".to_string(),
-            Type::Function(|params, scope| {
+            Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = None;
                 for expr in params {
                     result = Expr {
@@ -102,18 +110,38 @@ fn main() {
                     .eval(scope);
                 }
                 result
-            }),
+            })),
         ),
         (
             "var".to_string(),
-            Type::Function(|params, scope| {
+            Type::Function(Function::BuiltIn(|params, scope| {
                 scope.insert(params.get(0)?.get_string(), params.get(1)?.to_owned());
                 Some(Type::Null)
-            }),
+            })),
+        ),
+        (
+            "func".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                scope.insert(
+                    params.get(0)?.get_string(),
+                    Type::Function(Function::UserDefined(
+                        params
+                            .get(1)?
+                            .get_list()
+                            .iter()
+                            .map(|i| i.expr.get_string())
+                            .collect::<Vec<String>>(),
+                        params.get(2..)?.to_vec(),
+                    )),
+                );
+                Some(Type::Null)
+            })),
         ),
         (
             "exit".to_string(),
-            Type::Function(|params, _| exit(params.get(0)?.get_number() as i32)),
+            Type::Function(Function::BuiltIn(|params, _| {
+                exit(params.get(0)?.get_number() as i32)
+            })),
         ),
     ]);
 
@@ -141,7 +169,9 @@ fn parse_expr(source: String) -> Expr {
     for token in tokens {
         let annotate = if token.len() == 2 {
             match token[1].as_str() {
-                "function" => Some(Type::Function(|x, _| Some(x[0].clone()))),
+                "function" => Some(Type::Function(Function::BuiltIn(|x, _| {
+                    Some(x.get(0)?.clone())
+                }))),
                 "list" => Some(Type::List(vec![])),
                 "symbol" => Some(Type::Symbol(String::new())),
                 "string" => Some(Type::String(String::new())),
@@ -320,8 +350,19 @@ impl Expr {
                 }
                 new
             };
-            if let Type::Function(func) = expr.get(0)? {
+            if let Type::Function(Function::BuiltIn(func)) = expr.get(0)? {
                 func(expr.get(1..)?.to_vec(), scope)?
+            } else if let Type::Function(Function::UserDefined(args, code)) = expr.get(0)? {
+                let mut scope = scope.clone();
+                for (k, v) in args.iter().zip(expr.get(1..)?.to_vec()) {
+                    scope.insert(k.to_owned(), v);
+                }
+                let code: Vec<Expr> = code.get(0)?.get_list();
+                Expr {
+                    expr: Type::Expr(code),
+                    annotate: self.annotate.clone(),
+                }
+                .eval(&mut scope)?
             } else {
                 return None;
             }
@@ -358,7 +399,7 @@ impl Expr {
 
 #[derive(Clone, Debug)]
 enum Type {
-    Function(fn(Vec<Type>, &mut HashMap<String, Type>) -> Option<Type>),
+    Function(Function),
     Expr(Vec<Expr>),
     List(Vec<Expr>),
     Symbol(String),
@@ -366,6 +407,12 @@ enum Type {
     String(String),
     Bool(bool),
     Null,
+}
+
+#[derive(Clone, Debug)]
+enum Function {
+    BuiltIn(fn(Vec<Type>, &mut HashMap<String, Type>) -> Option<Type>),
+    UserDefined(Vec<String>, Vec<Type>),
 }
 
 impl Type {
