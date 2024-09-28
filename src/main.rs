@@ -443,6 +443,8 @@ fn builtin_function() -> HashMap<String, Type> {
                 exit(params.get(0)?.get_number() as i32)
             })),
         ),
+        ("new-line".to_string(), Type::String("\n".to_string())),
+        ("tab".to_string(), Type::String("\t".to_string())),
     ])
 }
 
