@@ -93,11 +93,15 @@ fn main() {
         (
             "eval".to_string(),
             Type::Function(|params, scope| {
-                Expr {
-                    expr: Type::Expr(params.get(0)?.get_list()),
-                    annotate: None,
+                let mut result = None;
+                for expr in params {
+                    result = Expr {
+                        expr: Type::Expr(expr.get_list()),
+                        annotate: None,
+                    }
+                    .eval(scope);
                 }
-                .eval(scope)
+                result
             }),
         ),
         (
