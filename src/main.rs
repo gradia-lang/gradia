@@ -40,6 +40,25 @@ fn main() {
             })),
         ),
         (
+            "%".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Number(
+                    params.get(0)?.get_number() % params.get(1)?.get_number(),
+                ))
+            })),
+        ),
+        (
+            "^".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Number(
+                    params
+                        .get(0)?
+                        .get_number()
+                        .powf(params.get(1)?.get_number()),
+                ))
+            })),
+        ),
+        (
             "concat".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::String(
@@ -52,6 +71,54 @@ fn main() {
             Type::Function(Function::BuiltIn(|params, _| {
                 println!("{}", params.get(0)?.get_string());
                 Some(Type::Null)
+            })),
+        ),
+        (
+            "=".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Bool(
+                    format!("{:?}", params.get(0)?) == format!("{:?}", params.get(1)?),
+                ))
+            })),
+        ),
+        (
+            "!=".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Bool(
+                    format!("{:?}", params.get(0)?) != format!("{:?}", params.get(1)?),
+                ))
+            })),
+        ),
+        (
+            ">".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Bool(
+                    params.get(0)?.get_number() > params.get(1)?.get_number(),
+                ))
+            })),
+        ),
+        (
+            ">=".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Bool(
+                    params.get(0)?.get_number() >= params.get(1)?.get_number(),
+                ))
+            })),
+        ),
+        (
+            "<".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Bool(
+                    params.get(0)?.get_number() < params.get(1)?.get_number(),
+                ))
+            })),
+        ),
+        (
+            "<=".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Bool(
+                    params.get(0)?.get_number() <= params.get(1)?.get_number(),
+                ))
             })),
         ),
         (
@@ -114,6 +181,19 @@ fn main() {
             })),
         ),
         (
+            "block".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                let mut result: Vec<Expr> = vec![];
+                for expr in params {
+                    result.push(Expr {
+                        expr,
+                        annotate: None,
+                    });
+                }
+                Some(Type::List(result))
+            })),
+        ),
+        (
             "var".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 scope.insert(params.get(0)?.get_string(), params.get(1)?.to_owned());
@@ -150,6 +230,46 @@ fn main() {
                         .collect::<Vec<String>>(),
                     params.get(1..)?.to_vec(),
                 )))
+            })),
+        ),
+        (
+            "if-else".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                if params.get(0)?.get_bool() {
+                    params.get(1)?.get_list().get(0)?.eval(scope)
+                } else {
+                    params.get(2)?.get_list().get(0)?.eval(scope)
+                }
+            })),
+        ),
+        (
+            "when".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                if params.get(0)?.get_bool() {
+                    params.get(1)?.get_list().get(0)?.eval(scope)
+                } else {
+                    Some(Type::Null)
+                }
+            })),
+        ),
+        (
+            "while".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                let mut result = None;
+                while params.get(0)?.get_list().get(0)?.eval(scope)?.get_bool() {
+                    result = params.get(1)?.get_list().get(0)?.eval(scope);
+                }
+                result
+            })),
+        ),
+        (
+            "until".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                let mut result = None;
+                while !params.get(0)?.get_list().get(0)?.eval(scope)?.get_bool() {
+                    result = params.get(1)?.get_list().get(0)?.eval(scope);
+                }
+                result
             })),
         ),
         (
