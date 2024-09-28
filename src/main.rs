@@ -393,18 +393,15 @@ fn builtin_function() -> HashMap<String, Type> {
         (
             "reduce".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let mut result = Type::Null;
-                let counter = params.get(1)?.get_string();
                 let func = if let Type::Function(func) = params.get(2)? {
                     func
                 } else {
                     return None;
                 };
+                let mut result = params.get(1)?.to_owned();
                 let mut scope = scope.clone();
-                result = scope.get(&counter).unwrap_or(&Type::Null).clone();
 
                 for i in params.get(0)?.get_list() {
-                    scope.insert(counter.clone(), result);
                     result = Expr {
                         expr: Type::Expr(vec![
                             Expr {
@@ -412,6 +409,10 @@ fn builtin_function() -> HashMap<String, Type> {
                                 annotate: None,
                             },
                             i,
+                            Expr {
+                                expr: result,
+                                annotate: None,
+                            },
                         ]),
                         annotate: None,
                     }
