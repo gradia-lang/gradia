@@ -1,12 +1,52 @@
+use clap::Parser;
+use rustyline::DefaultEditor;
 use std::{
     collections::HashMap,
     fmt::{self, Debug},
-    io::{self, Write},
+    fs::read_to_string,
     mem::discriminant,
     process::exit,
 };
+
+const VERSION: &str = "0.1.0";
+
+#[derive(Parser, Debug)]
+#[command(
+    name = "Statia",
+    version = VERSION,
+    author = "梶塚太智, kajizukataichi@outlook.jp",
+    about = "Lisp like programming language that can add type annotation",
+)]
+struct Cli {
+    /// Run the script file
+    #[arg(index = 1)]
+    file: Option<String>,
+}
+
 fn main() {
-    let scope = &mut HashMap::from([
+    let scope = &mut builtin_function();
+    let args = Cli::parse();
+
+    if let Some(path) = args.file {
+        parse_expr(read_to_string(path).unwrap().trim().to_string()).eval(scope);
+    } else {
+        println!("Statia");
+        loop {
+            let program = parse_expr(input("> "));
+            if let Some(result) = program.eval(scope) {
+                println!("{:?}", result);
+            }
+        }
+    }
+}
+
+/// Get standard input  using rustyline
+fn input(prompt: &str) -> String {
+    DefaultEditor::new().unwrap().readline(prompt).unwrap()
+}
+
+fn builtin_function() -> HashMap<String, Type> {
+    HashMap::from([
         (
             "+".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
@@ -253,23 +293,60 @@ fn main() {
             })),
         ),
         (
-            "while".to_string(),
+            "map".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let mut result = None;
-                while params.get(0)?.get_list().get(0)?.eval(scope)?.get_bool() {
-                    result = params.get(1)?.get_list().get(0)?.eval(scope);
+                let mut result = vec![];
+                let func = if let Type::Function(func) = params.get(1)? {
+                    func
+                } else {
+                    return None;
+                };
+                for i in params.get(0)?.get_list() {
+                    result.push(Expr {
+                        expr: Expr {
+                            expr: Type::Expr(vec![
+                                Expr {
+                                    expr: Type::Function(func.to_owned()),
+                                    annotate: None,
+                                },
+                                i,
+                            ]),
+                            annotate: None,
+                        }
+                        .eval(scope)?,
+                        annotate: None,
+                    });
                 }
-                result
+                Some(Type::List(result))
             })),
         ),
         (
-            "until".to_string(),
+            "filter".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let mut result = None;
-                while !params.get(0)?.get_list().get(0)?.eval(scope)?.get_bool() {
-                    result = params.get(1)?.get_list().get(0)?.eval(scope);
+                let mut result = vec![];
+                let func = if let Type::Function(func) = params.get(1)? {
+                    func
+                } else {
+                    return None;
+                };
+                for i in params.get(0)?.get_list() {
+                    if (Expr {
+                        expr: Type::Expr(vec![
+                            Expr {
+                                expr: Type::Function(func.to_owned()),
+                                annotate: None,
+                            },
+                            i.clone(),
+                        ]),
+                        annotate: None,
+                    })
+                    .eval(scope)?
+                    .get_bool()
+                    {
+                        result.push(i)
+                    }
                 }
-                result
+                Some(Type::List(result))
             })),
         ),
         (
@@ -278,24 +355,7 @@ fn main() {
                 exit(params.get(0)?.get_number() as i32)
             })),
         ),
-    ]);
-
-    println!("Statia");
-    loop {
-        let program = parse_expr(input("> "));
-        if let Some(result) = program.eval(scope) {
-            println!("{:?}", result);
-        }
-    }
-}
-
-/// Get standard input from user
-fn input(prompt: &str) -> String {
-    print!("{}", prompt);
-    io::stdout().flush().unwrap();
-    let mut result = String::new();
-    io::stdin().read_line(&mut result).ok();
-    result.trim().to_string()
+    ])
 }
 
 fn parse_expr(source: String) -> Expr {
@@ -318,47 +378,45 @@ fn parse_expr(source: String) -> Expr {
             None
         };
 
-        if let Ok(n) = token[0].parse::<f64>() {
+        let mut token = token[0].trim().to_string();
+        if let Ok(n) = token.parse::<f64>() {
             expr.push(Expr {
                 expr: Type::Number(n),
                 annotate,
             });
-        } else if let Ok(b) = token[0].parse::<bool>() {
+        } else if let Ok(b) = token.parse::<bool>() {
             expr.push(Expr {
                 expr: Type::Bool(b),
                 annotate,
             });
-        } else if token[0] == "null".to_string() {
+        } else if token == "null".to_string() {
             expr.push(Expr {
                 expr: Type::Null,
                 annotate,
             });
-        } else if token[0].starts_with('"') && token[0].ends_with('"') {
-            let mut string = token[0].clone();
-            string.remove(0);
-            string.remove(string.len() - 1);
+        } else if token.starts_with('"') && token.ends_with('"') {
+            token.remove(0);
+            token.remove(token.len() - 1);
             expr.push(Expr {
-                expr: Type::String(string),
+                expr: Type::String(token),
                 annotate,
             });
-        } else if token[0].starts_with('(') && token[0].ends_with(')') {
-            let mut string = token[0].clone();
-            string.remove(0);
-            string.remove(string.len() - 1);
+        } else if token.starts_with('(') && token.ends_with(')') {
+            token.remove(0);
+            token.remove(token.len() - 1);
             expr.push(Expr {
-                expr: parse_expr(string).expr,
+                expr: parse_expr(token).expr,
                 annotate,
             });
-        } else if token[0].starts_with("'(") && token[0].ends_with(')') {
-            let mut string = token[0].clone();
-            string.remove(0);
+        } else if token.starts_with("'(") && token.ends_with(')') {
+            token.remove(0);
             expr.push(Expr {
-                expr: Type::List(parse_expr(string).expr.get_list()),
+                expr: Type::List(parse_expr(token).expr.get_list()),
                 annotate,
             });
         } else {
             expr.push(Expr {
-                expr: Type::Symbol(token[0].clone()),
+                expr: Type::Symbol(token.clone()),
                 annotate,
             });
         }
@@ -400,7 +458,7 @@ fn tokenize_expr(input: String) -> Vec<Vec<String>> {
                 }
                 in_parentheses -= 1;
             }
-            ' ' if !in_quote => {
+            ' ' | '　' | '\n' | '\t' | '\r' if !in_quote => {
                 if in_parentheses != 0 {
                     if is_colon {
                         after_colon.push(c);
@@ -488,16 +546,16 @@ impl Expr {
             if let Type::Function(Function::BuiltIn(func)) = expr.get(0)? {
                 func(expr.get(1..)?.to_vec(), scope)?
             } else if let Type::Function(Function::UserDefined(args, code)) = expr.get(0)? {
-                let mut scope = scope.clone();
+                let mut func_scope = scope.clone();
                 for (k, v) in args.iter().zip(expr.get(1..)?.to_vec()) {
-                    scope.insert(k.to_owned(), v);
+                    func_scope.insert(k.to_owned(), v);
                 }
                 let code: Vec<Expr> = code.get(0)?.get_list();
                 Expr {
                     expr: Type::Expr(code),
                     annotate: self.annotate.clone(),
                 }
-                .eval(&mut scope)?
+                .eval(&mut func_scope)?
             } else {
                 return None;
             }
