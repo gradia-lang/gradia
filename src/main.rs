@@ -276,9 +276,17 @@ fn builtin_function() -> HashMap<String, Type> {
             "if-else".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 if params.get(0)?.get_bool() {
-                    params.get(1)?.get_list().get(0)?.eval(scope)
+                    Expr {
+                        expr: Type::Expr(params.get(1)?.clone().get_list()),
+                        annotate: None,
+                    }
+                    .eval(scope)
                 } else {
-                    params.get(2)?.get_list().get(0)?.eval(scope)
+                    Expr {
+                        expr: Type::Expr(params.get(2)?.clone().get_list()),
+                        annotate: None,
+                    }
+                    .eval(scope)
                 }
             })),
         ),
@@ -286,7 +294,11 @@ fn builtin_function() -> HashMap<String, Type> {
             "when".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 if params.get(0)?.get_bool() {
-                    params.get(1)?.get_list().get(0)?.eval(scope)
+                    Expr {
+                        expr: Type::Expr(params.get(1)?.clone().get_list()),
+                        annotate: None,
+                    }
+                    .eval(scope)
                 } else {
                     Some(Type::Null)
                 }
