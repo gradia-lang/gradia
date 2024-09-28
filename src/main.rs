@@ -293,6 +293,47 @@ fn builtin_function() -> HashMap<String, Type> {
             })),
         ),
         (
+            "range".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                if params.len() == 1 {
+                    let mut range: Vec<Expr> = vec![];
+                    let mut current: f64 = 0.0;
+                    while current < params[0].get_number() {
+                        range.push(Expr {
+                            expr: Type::Number(current),
+                            annotate: None,
+                        });
+                        current += 1.0;
+                    }
+                    Some(Type::List(range))
+                } else if params.len() == 2 {
+                    let mut range: Vec<Expr> = vec![];
+                    let mut current: f64 = params[0].get_number();
+                    while current < params[1].get_number() {
+                        range.push(Expr {
+                            expr: Type::Number(current),
+                            annotate: None,
+                        });
+                        current += 1.0;
+                    }
+                    Some(Type::List(range))
+                } else if params.len() >= 3 {
+                    let mut range: Vec<Expr> = vec![];
+                    let mut current: f64 = params[0].get_number();
+                    while current < params[1].get_number() {
+                        range.push(Expr {
+                            expr: Type::Number(current),
+                            annotate: None,
+                        });
+                        current += params[2].get_number();
+                    }
+                    Some(Type::List(range))
+                } else {
+                    Some(Type::Null)
+                }
+            })),
+        ),
+        (
             "map".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = vec![];
