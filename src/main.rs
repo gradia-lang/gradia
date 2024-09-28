@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::{self, Debug},
     io::{self, Write},
     mem::discriminant,
     process::exit,
@@ -163,7 +164,7 @@ fn main() {
     loop {
         let program = parse_expr(input("> "));
         if let Some(result) = program.eval(scope) {
-            println!("{}", result.display());
+            println!("{:?}", result);
         }
     }
 }
@@ -339,7 +340,7 @@ fn tokenize_expr(input: String) -> Vec<Vec<String>> {
     tokens
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct Expr {
     expr: Type,
     annotate: Option<Type>,
@@ -399,8 +400,8 @@ impl Expr {
                 Some(result)
             } else {
                 eprintln!(
-                    "Error! the result value `{}` is different to expected type `{}` ",
-                    result.display(),
+                    "Error! the result value `{:?}` is different to expected type `{}` ",
+                    result,
                     annotate.get_type()
                 );
                 None
@@ -411,7 +412,17 @@ impl Expr {
     }
 }
 
-#[derive(Clone, Debug)]
+impl Debug for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(annotate) = self.annotate.clone() {
+            write!(f, "{:?}:{}", self.expr, annotate.get_type())
+        } else {
+            write!(f, "{:?}", self.expr)
+        }
+    }
+}
+
+#[derive(Clone)]
 enum Type {
     Function(Function),
     Expr(Vec<Expr>),
@@ -490,8 +501,35 @@ impl Type {
             }],
         }
     }
+}
 
-    fn display(&self) -> String {
-        format!("{self:?}").to_lowercase()
+impl Debug for Type {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let fmt = match &self {
+            Type::String(s) => format!("\"{s}\""),
+            Type::Number(n) => n.to_string(),
+            Type::Bool(b) => b.to_string(),
+            Type::Function(Function::UserDefined(args, code)) => {
+                format!("(lambda '({}) {:?})", args.join(" "), code[0])
+            }
+            Type::Function(Function::BuiltIn(n)) => format!("function({n:?})"),
+            Type::Symbol(v) => v.to_owned(),
+            Type::List(l) => format!(
+                "'({})",
+                l.iter()
+                    .map(|x| format!("{x:?}"))
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
+            Type::Expr(l) => format!(
+                "({})",
+                l.iter()
+                    .map(|x| format!("{x:?}"))
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
+            Type::Null => "null".to_string(),
+        };
+        write!(f, "{fmt}",)
     }
 }
