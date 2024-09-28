@@ -18,7 +18,7 @@ const VERSION: &str = "0.1.0";
     about = "Lisp like programming language that can add type annotation",
 )]
 struct Cli {
-    /// Run the script file
+    /// Script file to be running
     #[arg(index = 1)]
     file: Option<String>,
 }
@@ -28,11 +28,15 @@ fn main() {
     let args = Cli::parse();
 
     if let Some(path) = args.file {
-        parse_expr(read_to_string(path).unwrap().trim().to_string()).eval(scope);
+        if let Ok(code) = read_to_string(path) {
+            parse(code).eval(scope);
+        } else {
+            eprintln!("Error! opening file is fault");
+        }
     } else {
-        println!("Statia");
+        println!("Statia {VERSION}");
         loop {
-            let program = parse_expr(input("> "));
+            let program = parse(input("> "));
             if let Some(result) = program.eval(scope) {
                 println!("{:?}", result);
             }
@@ -442,8 +446,8 @@ fn builtin_function() -> HashMap<String, Type> {
     ])
 }
 
-fn parse_expr(source: String) -> Expr {
-    let tokens = tokenize_expr(source);
+fn parse(source: String) -> Expr {
+    let tokens = tokenize(source);
     let mut expr: Vec<Expr> = vec![];
     for token in tokens {
         let annotate = if token.len() == 2 {
@@ -489,13 +493,13 @@ fn parse_expr(source: String) -> Expr {
             token.remove(0);
             token.remove(token.len() - 1);
             expr.push(Expr {
-                expr: parse_expr(token).expr,
+                expr: parse(token).expr,
                 annotate,
             });
         } else if token.starts_with("'(") && token.ends_with(')') {
             token.remove(0);
             expr.push(Expr {
-                expr: Type::List(parse_expr(token).expr.get_list()),
+                expr: Type::List(parse(token).expr.get_list()),
                 annotate,
             });
         } else {
@@ -516,7 +520,7 @@ fn parse_expr(source: String) -> Expr {
     }
 }
 
-fn tokenize_expr(input: String) -> Vec<Vec<String>> {
+fn tokenize(input: String) -> Vec<Vec<String>> {
     let mut tokens: Vec<Vec<String>> = Vec::new();
     let mut current_token = String::new();
     let mut after_colon = String::new();
