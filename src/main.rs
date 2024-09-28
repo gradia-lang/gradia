@@ -238,27 +238,22 @@ fn builtin_function() -> HashMap<String, Type> {
             })),
         ),
         (
-            "var".to_string(),
+            "define".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                scope.insert(params.get(0)?.get_string(), params.get(1)?.to_owned());
-                Some(Type::Null)
-            })),
-        ),
-        (
-            "func".to_string(),
-            Type::Function(Function::BuiltIn(|params, scope| {
-                scope.insert(
-                    params.get(0)?.get_string(),
-                    Type::Function(Function::UserDefined(
-                        params
-                            .get(1)?
-                            .get_list()
-                            .iter()
-                            .map(|i| i.expr.get_string())
-                            .collect::<Vec<String>>(),
-                        params.get(2..)?.to_vec(),
-                    )),
-                );
+                if let Type::List(args) = params.get(0)? {
+                    scope.insert(
+                        args.get(0)?.expr.get_string(),
+                        Type::Function(Function::UserDefined(
+                            args.get(1..)?
+                                .iter()
+                                .map(|i| i.expr.get_string())
+                                .collect::<Vec<String>>(),
+                            params.get(1..)?.to_owned(),
+                        )),
+                    );
+                } else {
+                    scope.insert(params.get(0)?.get_string(), params.get(1)?.to_owned());
+                }
                 Some(Type::Null)
             })),
         ),
