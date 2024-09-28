@@ -75,22 +75,25 @@ fn main() {
         ),
         (
             "cast".to_string(),
-            Type::Function(|params| match params[1].get_string().as_str() {
-                "number" => Some(Type::Number(params[0].get_number())),
-                "string" => Some(Type::String(params[0].get_string())),
-                "bool" => Some(Type::Bool(params[0].get_bool())),
-                _ => Some(params[0].clone()),
+            Type::Function(|params| match params.get(1)?.get_string().as_str() {
+                "number" => Some(Type::Number(params.get(0)?.get_number())),
+                "string" => Some(Type::String(params.get(0)?.get_string())),
+                "bool" => Some(Type::Bool(params.get(0)?.get_bool())),
+                _ => Some(params.get(0)?.clone()),
             }),
         ),
         (
             "type".to_string(),
-            Type::Function(|params| Some(Type::String(params[0].get_type()))),
+            Type::Function(|params| Some(Type::String(params.get(0)?.get_type()))),
         ),
         (
             "input".to_string(),
-            Type::Function(|params| Some(Type::String(input(&params[0].get_string())))),
+            Type::Function(|params| Some(Type::String(input(&params.get(0)?.get_string())))),
         ),
-        ("exit".to_string(), Type::Function(|_| exit(0))),
+        (
+            "exit".to_string(),
+            Type::Function(|params| exit(params.get(0)?.get_number() as i32)),
+        ),
     ]);
 
     println!("Statia");
