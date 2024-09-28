@@ -5,7 +5,7 @@ use std::{
     process::exit,
 };
 fn main() {
-    let scope = HashMap::from([
+    let scope = &mut HashMap::from([
         (
             "+".to_string(),
             Type::Function(|params, _| {
@@ -94,10 +94,17 @@ fn main() {
             "eval".to_string(),
             Type::Function(|params, scope| {
                 Expr {
-                    expr: Type::Expr(params[0].get_list()),
+                    expr: Type::Expr(params.get(0)?.get_list()),
                     annotate: None,
                 }
                 .eval(scope)
+            }),
+        ),
+        (
+            "var".to_string(),
+            Type::Function(|params, scope| {
+                scope.insert(params.get(0)?.get_string(), params.get(1)?.to_owned());
+                Some(Type::Null)
             }),
         ),
         (
@@ -109,7 +116,7 @@ fn main() {
     println!("Statia");
     loop {
         let program = parse_expr(input("> "));
-        if let Some(result) = program.eval(scope.clone()) {
+        if let Some(result) = program.eval(scope) {
             println!("{}", result.display());
         }
     }
@@ -291,14 +298,18 @@ struct Expr {
 }
 
 impl Expr {
-    fn eval(&self, scope: HashMap<String, Type>) -> Option<Type> {
+    fn eval(&self, scope: &mut HashMap<String, Type>) -> Option<Type> {
         let result = if let Type::Expr(expr) = &self.expr {
             let expr = {
                 let mut new = vec![];
                 for i in expr {
-                    let temp = i.eval(scope.clone())?;
-                    new.push(if let Type::Symbol(name) = temp {
-                        scope.get(&name)?.to_owned()
+                    let temp = i.eval(scope)?;
+                    new.push(if let Type::Symbol(name) = temp.clone() {
+                        if let Some(value) = scope.get(&name).to_owned() {
+                            value.to_owned()
+                        } else {
+                            temp
+                        }
                     } else {
                         temp
                     });
@@ -311,7 +322,16 @@ impl Expr {
                 return None;
             }
         } else {
-            self.expr.clone()
+            let temp = self.expr.clone();
+            if let Type::Symbol(name) = temp.clone() {
+                if let Some(value) = scope.get(&name).to_owned() {
+                    value.to_owned()
+                } else {
+                    temp
+                }
+            } else {
+                temp
+            }
         };
 
         // Type check between except type and annotate value
@@ -334,7 +354,7 @@ impl Expr {
 
 #[derive(Clone, Debug)]
 enum Type {
-    Function(fn(Vec<Type>, HashMap<String, Type>) -> Option<Type>),
+    Function(fn(Vec<Type>, &mut HashMap<String, Type>) -> Option<Type>),
     Expr(Vec<Expr>),
     List(Vec<Expr>),
     Symbol(String),
