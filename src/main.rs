@@ -139,7 +139,7 @@ fn main() {
         ),
         (
             "lambda".to_string(),
-            Type::Function(Function::BuiltIn(|params, scope| {
+            Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::Function(Function::UserDefined(
                     params
                         .get(0)?
