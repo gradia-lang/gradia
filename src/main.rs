@@ -647,6 +647,7 @@ impl Expr {
                 }
                 new
             };
+
             if let Type::Function(Function::BuiltIn(func)) = expr.get(0)? {
                 func(expr.get(1..)?.to_vec(), scope)?
             } else if let Type::Function(Function::UserDefined(args, code)) = expr.get(0)? {
@@ -654,12 +655,20 @@ impl Expr {
                 for (k, v) in args.iter().zip(expr.get(1..)?.to_vec()) {
                     func_scope.insert(k.to_owned(), v);
                 }
-                let code: Vec<Expr> = code.get(0)?.get_list();
-                Expr {
-                    expr: Type::Expr(code),
-                    annotate: self.annotate.clone(),
+
+                let mut result = None;
+                for line in code {
+                    result = Expr {
+                        expr: if let Type::List(expr) = line.to_owned() {
+                            Type::Expr(expr)
+                        } else {
+                            line.to_owned()
+                        },
+                        annotate: None,
+                    }
+                    .eval(&mut func_scope);
                 }
-                .eval(&mut func_scope)?
+                result?
             } else {
                 return None;
             }
