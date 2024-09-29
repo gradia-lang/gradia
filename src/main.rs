@@ -4,7 +4,6 @@ use std::{
     collections::HashMap,
     fmt::{self, Debug},
     fs::read_to_string,
-    mem::discriminant,
     process::exit,
 };
 
@@ -437,6 +436,20 @@ fn builtin_function() -> HashMap<String, Type> {
             })),
         ),
         (
+            "join".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::String(
+                    params
+                        .get(0)?
+                        .get_list()
+                        .iter()
+                        .map(|i| i.expr.get_string())
+                        .collect::<Vec<String>>()
+                        .join(&params.get(1)?.get_string()),
+                ))
+            })),
+        ),
+        (
             "exit".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 exit(params.get(0)?.get_number() as i32)
@@ -461,6 +474,7 @@ fn parse(source: String) -> Option<Expr> {
                 "string" => Some(Type::String(String::new())),
                 "number" => Some(Type::Number(0.0)),
                 "bool" => Some(Type::Bool(false)),
+                "null" => Some(Type::Null),
                 _ => None,
             }
         } else {
@@ -694,7 +708,7 @@ impl Expr {
 
         // Type check between except type and annotate value
         if let Some(annotate) = self.annotate.clone() {
-            if discriminant(&result) == discriminant(&annotate) {
+            if &result.get_type() == &annotate.get_type() {
                 Some(result)
             } else {
                 eprintln!(
