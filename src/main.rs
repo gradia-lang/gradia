@@ -28,8 +28,12 @@ fn main() {
 
     if let Some(path) = args.file {
         if let Ok(code) = read_to_string(path) {
-            if let Some(ast) = parse(code) {
-                ast.eval(scope);
+            if let Some(lines) = tokenize(code) {
+                for line in lines {
+                    if let Some(ast) = parse(line[0].clone()) {
+                        ast.eval(scope);
+                    }
+                }
             }
         } else {
             eprintln!("Error! opening file is fault");
@@ -37,10 +41,13 @@ fn main() {
     } else {
         println!("Statia {VERSION}");
         loop {
-            let program = parse(input("> "));
-            if let Some(program) = program {
-                if let Some(result) = program.eval(scope) {
-                    println!("{:?}", result);
+            if let Some(lines) = tokenize(input("> ")) {
+                for line in lines {
+                    if let Some(ast) = parse(line[0].clone()) {
+                        if let Some(result) = ast.eval(scope) {
+                            println!("{:?}", result);
+                        }
+                    }
                 }
             }
         }
