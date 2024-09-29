@@ -684,14 +684,18 @@ impl Expr {
                 }
                 result?
             } else {
-                Type::List(
-                    expr.iter()
-                        .map(|i| Expr {
-                            expr: i.to_owned(),
-                            annotate: None,
-                        })
-                        .collect(),
-                )
+                if expr.len() == 1 {
+                    expr[0].clone()
+                } else {
+                    Type::List(
+                        expr.iter()
+                            .map(|i| Expr {
+                                expr: i.to_owned(),
+                                annotate: None,
+                            })
+                            .collect(),
+                    )
+                }
             }
         } else {
             let temp = self.expr.clone();
