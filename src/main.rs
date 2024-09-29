@@ -498,6 +498,7 @@ fn builtin_function() -> HashMap<String, Type> {
             })),
         ),
         ("new-line".to_string(), Type::String("\n".to_string())),
+        ("double-quote".to_string(), Type::String("\"".to_string())),
         ("tab".to_string(), Type::String("\t".to_string())),
     ])
 }
