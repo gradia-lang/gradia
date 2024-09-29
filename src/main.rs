@@ -496,6 +496,7 @@ fn builtin_function() -> HashMap<String, Type> {
 }
 
 fn parse(token: Vec<String>) -> Option<Expr> {
+    // Setting type annotation
     let annotate = if token.len() == 2 {
         match token[1].as_str() {
             "function" => Some(Type::Function(Function::BuiltIn(|x, _| {
@@ -514,61 +515,70 @@ fn parse(token: Vec<String>) -> Option<Expr> {
     };
 
     let mut token = token[0].trim().to_string();
-    Some(if let Ok(n) = token.parse::<f64>() {
-        Expr {
-            expr: Type::Number(n),
-            annotate,
-        }
-    } else if let Ok(b) = token.parse::<bool>() {
-        Expr {
-            expr: Type::Bool(b),
-            annotate,
-        }
-    } else if token == "null".to_string() {
-        Expr {
-            expr: Type::Null,
-            annotate,
-        }
-    } else if token.starts_with('"') && token.ends_with('"') {
-        token.remove(0);
-        token.remove(token.len() - 1);
-        Expr {
-            expr: Type::String(token),
-            annotate,
-        }
-    } else if token.starts_with('(') && token.ends_with(')') {
-        token.remove(0);
-        token.remove(token.len() - 1);
-        Expr {
-            expr: {
-                let mut list = vec![];
-                for i in tokenize(token)? {
-                    list.push(parse(i)?)
-                }
-                Type::Expr(list)
-            },
-            annotate,
-        }
-    } else if token.starts_with("'(") && token.ends_with(')') {
-        token.remove(0);
-        token.remove(0);
-        token.remove(token.len() - 1);
-        Expr {
-            expr: {
-                let mut list = vec![];
-                for i in tokenize(token)? {
-                    list.push(parse(i)?)
-                }
-                Type::List(list)
-            },
-            annotate,
-        }
-    } else {
-        Expr {
-            expr: Type::Symbol(token.clone()),
-            annotate,
-        }
-    })
+    Some(
+        // Number case
+        if let Ok(n) = token.parse::<f64>() {
+            Expr {
+                expr: Type::Number(n),
+                annotate,
+            }
+        // Bool calse
+        } else if let Ok(b) = token.parse::<bool>() {
+            Expr {
+                expr: Type::Bool(b),
+                annotate,
+            }
+        // Null calse
+        } else if token == "null".to_string() {
+            Expr {
+                expr: Type::Null,
+                annotate,
+            }
+        // String calse
+        } else if token.starts_with('"') && token.ends_with('"') {
+            token.remove(0); // Removing outer syntax
+            token.remove(token.len() - 1);
+            Expr {
+                expr: Type::String(token),
+                annotate,
+            }
+        // Expression case
+        } else if token.starts_with('(') && token.ends_with(')') {
+            token.remove(0); // Removing outer syntax
+            token.remove(token.len() - 1);
+            Expr {
+                expr: {
+                    let mut list = vec![];
+                    for i in tokenize(token)? {
+                        list.push(parse(i)?)
+                    }
+                    Type::Expr(list)
+                },
+                annotate,
+            }
+        // List case
+        } else if token.starts_with("'(") && token.ends_with(')') {
+            token.remove(0); // Removing outer syntax
+            token.remove(0);
+            token.remove(token.len() - 1);
+            Expr {
+                expr: {
+                    let mut list = vec![];
+                    for i in tokenize(token)? {
+                        list.push(parse(i)?)
+                    }
+                    Type::List(list)
+                },
+                annotate,
+            }
+        // Other case will be symbol
+        } else {
+            Expr {
+                expr: Type::Symbol(token.clone()),
+                annotate,
+            }
+        },
+    )
 }
 
 fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
@@ -681,11 +691,13 @@ struct Expr {
 impl Expr {
     fn eval(&self, scope: &mut HashMap<String, Type>) -> Option<Type> {
         let result = if let Type::Expr(expr) = &self.expr {
+            // Prepare expression
             let expr = {
                 let mut new = vec![];
                 for i in expr {
                     let temp = i.eval(scope)?;
                     new.push(if let Type::Symbol(name) = temp.clone() {
+                        // Loading variable from scope
                         if let Some(value) = scope.get(&name).to_owned() {
                             value.to_owned()
                         } else {
@@ -704,7 +716,9 @@ impl Expr {
                 let mut func_scope = scope.clone();
                 for (k, v) in args.iter().zip(expr.get(1..)?.to_vec()) {
                     if let Some(annotate) = k.annotate.clone() {
+                        // Type check between arguments and expects
                         if annotate.get_type() == v.get_type() {
+                            // Setting argument by passed value
                             func_scope.insert(k.expr.get_string(), v);
                         } else {
                             eprintln!(
@@ -714,10 +728,12 @@ impl Expr {
                             return None;
                         }
                     } else {
+                        // Setting argument by passed value
                         func_scope.insert(k.expr.get_string(), v);
                     }
                 }
 
+                // Execution of function's code
                 let mut result = None;
                 for line in code {
                     result = Expr {
@@ -746,19 +762,20 @@ impl Expr {
                 }
             }
         } else {
-            let temp = self.expr.clone();
-            if let Type::Symbol(name) = temp.clone() {
+            let expr = self.expr.clone();
+            if let Type::Symbol(name) = expr.clone() {
+                // Loading variable from scope
                 if let Some(value) = scope.get(&name).to_owned() {
                     value.to_owned()
                 } else {
-                    temp
+                    expr
                 }
             } else {
-                temp
+                expr
             }
         };
 
-        // Type check between except type and annotate value
+        // Type check between result value and except type
         if let Some(annotate) = self.annotate.clone() {
             if &result.get_type() == &annotate.get_type() {
                 Some(result)
