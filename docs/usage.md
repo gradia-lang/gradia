@@ -8,7 +8,6 @@
 ### With type annotation
 ```
 (+:function 1:number (-:function 2:number (*:function 3:number (/:function 4:number 5:number):number):number):number):number
-
 ```
 
 ## Define variable
