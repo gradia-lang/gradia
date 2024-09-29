@@ -27,7 +27,7 @@
 
 ### With type annotation
 ```
-(define:function '(x2:symbol n:symbol):list '(*:function n:number 2:number):list):function
+(define:function '(x2:symbol n:number):list '(*:function n:number 2:number):list):function
 ```
 
 ## Lambda function
