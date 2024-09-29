@@ -670,7 +670,14 @@ impl Expr {
                 }
                 result?
             } else {
-                return None;
+                Type::List(
+                    expr.iter()
+                        .map(|i| Expr {
+                            expr: i.to_owned(),
+                            annotate: None,
+                        })
+                        .collect(),
+                )
             }
         } else {
             let temp = self.expr.clone();
@@ -801,7 +808,14 @@ impl Debug for Type {
             Type::Number(n) => n.to_string(),
             Type::Bool(b) => b.to_string(),
             Type::Function(Function::UserDefined(args, code)) => {
-                format!("(lambda '({}) {:?})", args.join(" "), code[0])
+                format!(
+                    "(lambda '({}) {})",
+                    args.join(" "),
+                    code.iter()
+                        .map(|i| format!("{i:?}"))
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                )
             }
             Type::Function(Function::BuiltIn(n)) => format!("function({n:?})"),
             Type::Symbol(v) => v.to_owned(),
