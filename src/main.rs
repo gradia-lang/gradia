@@ -64,131 +64,165 @@ fn builtin_function() -> HashMap<String, Type> {
         (
             "+".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Number(
-                    params.get(0)?.get_number() + params.get(1)?.get_number(),
-                ))
+                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                let mut result: f64 = *params.get(0)?;
+                for i in params[1..params.len()].to_vec().iter() {
+                    result += i;
+                }
+                Some(Type::Number(result))
             })),
         ),
         (
             "-".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Number(
-                    params.get(0)?.get_number() - params.get(1)?.get_number(),
-                ))
+                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                let mut result: f64 = *params.get(0)?;
+                for i in params[1..params.len()].to_vec().iter() {
+                    result -= i;
+                }
+                Some(Type::Number(result))
             })),
         ),
         (
             "*".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Number(
-                    params.get(0)?.get_number() * params.get(1)?.get_number(),
-                ))
+                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                let mut result: f64 = *params.get(0)?;
+                for i in params[1..params.len()].to_vec().iter() {
+                    result *= i;
+                }
+                Some(Type::Number(result))
             })),
         ),
         (
             "/".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Number(
-                    params.get(0)?.get_number() / params.get(1)?.get_number(),
-                ))
+                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                let mut result: f64 = *params.get(0)?;
+                for i in params[1..params.len()].to_vec().iter() {
+                    result /= i;
+                }
+                Some(Type::Number(result))
             })),
         ),
         (
             "%".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Number(
-                    params.get(0)?.get_number() % params.get(1)?.get_number(),
-                ))
+                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                let mut result: f64 = *params.get(0)?;
+                for i in params[1..params.len()].to_vec().iter() {
+                    result %= i;
+                }
+                Some(Type::Number(result))
             })),
         ),
         (
             "^".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Number(
-                    params
-                        .get(0)?
-                        .get_number()
-                        .powf(params.get(1)?.get_number()),
-                ))
+                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                let mut result: f64 = *params.get(0)?;
+                for i in params[1..params.len()].to_vec().iter() {
+                    result = result.powf(i.to_owned());
+                }
+                Some(Type::Number(result))
             })),
         ),
         (
             "concat".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::String(
-                    params.get(0)?.get_string() + &params.get(1)?.get_string(),
+                    params
+                        .iter()
+                        .map(|i| i.get_string())
+                        .collect::<Vec<String>>()
+                        .join(""),
                 ))
             })),
         ),
         (
             "print".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                println!("{}", params.get(0)?.get_string());
+                println!(
+                    "{}",
+                    params
+                        .iter()
+                        .map(|i| i.get_string())
+                        .collect::<Vec<String>>()
+                        .join(" "),
+                );
                 Some(Type::Null)
             })),
         ),
         (
             "=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(
-                    format!("{:?}", params.get(0)?) == format!("{:?}", params.get(1)?),
-                ))
+                Some(Type::Bool({
+                    let params: Vec<String> = params.iter().map(|i| format!("{i:?}")).collect();
+                    params.windows(2).all(|window| window[0] == window[1])
+                }))
             })),
         ),
         (
             "!=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(
-                    format!("{:?}", params.get(0)?) != format!("{:?}", params.get(1)?),
-                ))
+                Some(Type::Bool({
+                    let params: Vec<String> = params.iter().map(|i| format!("{i:?}")).collect();
+                    params.windows(2).all(|window| window[0] != window[1])
+                }))
             })),
         ),
         (
             ">".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(
-                    params.get(0)?.get_number() > params.get(1)?.get_number(),
-                ))
+                Some(Type::Bool({
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    params.windows(2).all(|window| window[0] > window[1])
+                }))
             })),
         ),
         (
             ">=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(
-                    params.get(0)?.get_number() >= params.get(1)?.get_number(),
-                ))
+                Some(Type::Bool({
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    params.windows(2).all(|window| window[0] >= window[1])
+                }))
             })),
         ),
         (
             "<".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(
-                    params.get(0)?.get_number() < params.get(1)?.get_number(),
-                ))
+                Some(Type::Bool({
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    params.windows(2).all(|window| window[0] < window[1])
+                }))
             })),
         ),
         (
             "<=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(
-                    params.get(0)?.get_number() <= params.get(1)?.get_number(),
-                ))
+                Some(Type::Bool({
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    params.windows(2).all(|window| window[0] < window[1])
+                }))
             })),
         ),
         (
             "&".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(
-                    params.get(0)?.get_bool() & params.get(1)?.get_bool(),
-                ))
+                Some(Type::Bool({
+                    let params: Vec<bool> = params.iter().map(|i| i.get_bool()).collect();
+                    params.iter().all(|x| *x)
+                }))
             })),
         ),
         (
             "|".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(
-                    params.get(0)?.get_bool() | params.get(1)?.get_bool(),
-                ))
+                Some(Type::Bool({
+                    let params: Vec<bool> = params.iter().map(|i| i.get_bool()).collect();
+                    params.iter().any(|x| *x)
+                }))
             })),
         ),
         (
@@ -204,6 +238,7 @@ fn builtin_function() -> HashMap<String, Type> {
                     "number" => Some(Type::Number(params.get(0)?.get_number())),
                     "string" => Some(Type::String(params.get(0)?.get_string())),
                     "bool" => Some(Type::Bool(params.get(0)?.get_bool())),
+                    "list" => Some(Type::List(params.get(0)?.get_list())),
                     _ => Some(params.get(0)?.clone()),
                 }
             })),
