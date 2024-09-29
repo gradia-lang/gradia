@@ -30,3 +30,13 @@
 ```
 (define:function '(x2:symbol n:symbol):list '(*:function n:number 2:number):list):function
 ```
+
+## Lambda function
+```
+(lambda '(n) '(* n 2))
+```
+
+### With type annotation
+```
+(lambda:function '(n:symbol):list '(*:function n:nunber 2:number):list):function
+```
