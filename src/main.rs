@@ -240,21 +240,21 @@ fn builtin_function() -> HashMap<String, Type> {
         (
             "define".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
+                let value: Type;
                 if let Type::List(args) = params.get(0)? {
-                    scope.insert(
-                        args.get(0)?.expr.get_string(),
-                        Type::Function(Function::UserDefined(
-                            args.get(1..)?
-                                .iter()
-                                .map(|i| i.expr.get_string())
-                                .collect::<Vec<String>>(),
-                            params.get(1..)?.to_owned(),
-                        )),
-                    );
+                    value = Type::Function(Function::UserDefined(
+                        args.get(1..)?
+                            .iter()
+                            .map(|i| i.expr.get_string())
+                            .collect::<Vec<String>>(),
+                        params.get(1..)?.to_owned(),
+                    ));
+                    scope.insert(args.get(0)?.expr.get_string(), value.clone());
                 } else {
-                    scope.insert(params.get(0)?.get_string(), params.get(1)?.to_owned());
+                    value = params.get(1)?.to_owned();
+                    scope.insert(params.get(0)?.get_string(), value.clone());
                 }
-                Some(Type::Null)
+                Some(value)
             })),
         ),
         (
