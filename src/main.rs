@@ -553,7 +553,6 @@ fn parse(token: Vec<String>) -> Option<Expr> {
         token.remove(0);
         token.remove(0);
         token.remove(token.len() - 1);
-        dbg!(&token);
         Expr {
             expr: {
                 let mut list = vec![];
