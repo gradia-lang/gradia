@@ -39,3 +39,13 @@
 ```
 (lambda:function '(n:symbol):list '(*:function n:nunber 2:number):list):function
 ```
+
+## List
+```
+'(1 2 3 "abc")
+```
+
+### With type annotation
+```
+'(1:number 2:number 3:number "abc":string):list
+```
