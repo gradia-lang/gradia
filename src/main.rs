@@ -30,7 +30,7 @@ fn main() {
         if let Ok(code) = read_to_string(path) {
             if let Some(lines) = tokenize(code) {
                 for line in lines {
-                    if let Some(ast) = parse(line[0].clone()) {
+                    if let Some(ast) = parse(line) {
                         ast.eval(scope);
                     }
                 }
@@ -43,7 +43,7 @@ fn main() {
         loop {
             if let Some(lines) = tokenize(input("> ")) {
                 for line in lines {
-                    if let Some(ast) = parse(line[0].clone()) {
+                    if let Some(ast) = parse(line) {
                         if let Some(result) = ast.eval(scope) {
                             println!("{:?}", result);
                         }
@@ -495,77 +495,79 @@ fn builtin_function() -> HashMap<String, Type> {
     ])
 }
 
-fn parse(source: String) -> Option<Expr> {
-    let tokens = tokenize(source)?;
-    let mut expr: Vec<Expr> = vec![];
-    for token in tokens {
-        let annotate = if token.len() == 2 {
-            match token[1].as_str() {
-                "function" => Some(Type::Function(Function::BuiltIn(|x, _| {
-                    Some(x.get(0)?.clone())
-                }))),
-                "list" => Some(Type::List(vec![])),
-                "symbol" => Some(Type::Symbol(String::new())),
-                "string" => Some(Type::String(String::new())),
-                "number" => Some(Type::Number(0.0)),
-                "bool" => Some(Type::Bool(false)),
-                "null" => Some(Type::Null),
-                _ => None,
-            }
-        } else {
-            None
-        };
-
-        let mut token = token[0].trim().to_string();
-        if let Ok(n) = token.parse::<f64>() {
-            expr.push(Expr {
-                expr: Type::Number(n),
-                annotate,
-            });
-        } else if let Ok(b) = token.parse::<bool>() {
-            expr.push(Expr {
-                expr: Type::Bool(b),
-                annotate,
-            });
-        } else if token == "null".to_string() {
-            expr.push(Expr {
-                expr: Type::Null,
-                annotate,
-            });
-        } else if token.starts_with('"') && token.ends_with('"') {
-            token.remove(0);
-            token.remove(token.len() - 1);
-            expr.push(Expr {
-                expr: Type::String(token),
-                annotate,
-            });
-        } else if token.starts_with('(') && token.ends_with(')') {
-            token.remove(0);
-            token.remove(token.len() - 1);
-            expr.push(Expr {
-                expr: parse(token)?.expr,
-                annotate,
-            });
-        } else if token.starts_with("'(") && token.ends_with(')') {
-            token.remove(0);
-            expr.push(Expr {
-                expr: Type::List(parse(token)?.expr.get_list()),
-                annotate,
-            });
-        } else {
-            expr.push(Expr {
-                expr: Type::Symbol(token.clone()),
-                annotate,
-            });
+fn parse(token: Vec<String>) -> Option<Expr> {
+    let annotate = if token.len() == 2 {
+        match token[1].as_str() {
+            "function" => Some(Type::Function(Function::BuiltIn(|x, _| {
+                Some(x.get(0)?.clone())
+            }))),
+            "list" => Some(Type::List(vec![])),
+            "symbol" => Some(Type::Symbol(String::new())),
+            "string" => Some(Type::String(String::new())),
+            "number" => Some(Type::Number(0.0)),
+            "bool" => Some(Type::Bool(false)),
+            "null" => Some(Type::Null),
+            _ => None,
         }
-    }
+    } else {
+        None
+    };
 
-    Some(if expr.len() == 1 {
-        expr[0].clone()
+    let mut token = token[0].trim().to_string();
+    Some(if let Ok(n) = token.parse::<f64>() {
+        Expr {
+            expr: Type::Number(n),
+            annotate,
+        }
+    } else if let Ok(b) = token.parse::<bool>() {
+        Expr {
+            expr: Type::Bool(b),
+            annotate,
+        }
+    } else if token == "null".to_string() {
+        Expr {
+            expr: Type::Null,
+            annotate,
+        }
+    } else if token.starts_with('"') && token.ends_with('"') {
+        token.remove(0);
+        token.remove(token.len() - 1);
+        Expr {
+            expr: Type::String(token),
+            annotate,
+        }
+    } else if token.starts_with('(') && token.ends_with(')') {
+        token.remove(0);
+        token.remove(token.len() - 1);
+        Expr {
+            expr: {
+                let mut list = vec![];
+                for i in tokenize(token)? {
+                    list.push(parse(i)?)
+                }
+                Type::Expr(list)
+            },
+            annotate,
+        }
+    } else if token.starts_with("'(") && token.ends_with(')') {
+        token.remove(0);
+        token.remove(0);
+        token.remove(token.len() - 1);
+        dbg!(&token);
+        Expr {
+            expr: {
+                let mut list = vec![];
+                for i in tokenize(token)? {
+                    list.push(parse(i)?)
+                }
+                Type::List(list)
+            },
+            annotate,
+        }
     } else {
         Expr {
-            expr: Type::Expr(expr),
-            annotate: None,
+            expr: Type::Symbol(token.clone()),
+            annotate,
         }
     })
 }
