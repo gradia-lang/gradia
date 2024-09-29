@@ -288,10 +288,7 @@ fn builtin_function() -> HashMap<String, Type> {
                 let value: Type;
                 if let Type::List(args) = params.get(0)? {
                     value = Type::Function(Function::UserDefined(
-                        args.get(1..)?
-                            .iter()
-                            .map(|i| i.expr.get_string())
-                            .collect::<Vec<String>>(),
+                        args.get(1..)?.to_vec(),
                         params.get(1..)?.to_owned(),
                     ));
                     scope.insert(args.get(0)?.expr.get_string(), value.clone());
@@ -306,12 +303,7 @@ fn builtin_function() -> HashMap<String, Type> {
             "lambda".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::Function(Function::UserDefined(
-                    params
-                        .get(0)?
-                        .get_list()
-                        .iter()
-                        .map(|i| i.expr.get_string())
-                        .collect::<Vec<String>>(),
+                    params.get(0)?.get_list(),
                     params.get(1..)?.to_vec(),
                 )))
             })),
@@ -710,7 +702,19 @@ impl Expr {
             } else if let Type::Function(Function::UserDefined(args, code)) = expr.get(0)? {
                 let mut func_scope = scope.clone();
                 for (k, v) in args.iter().zip(expr.get(1..)?.to_vec()) {
-                    func_scope.insert(k.to_owned(), v);
+                    if let Some(annotate) = k.annotate.clone() {
+                        if annotate.get_type() == v.get_type() {
+                            func_scope.insert(k.expr.get_string(), v);
+                        } else {
+                            eprintln!(
+                                "Error! the passed argument value `{:?}` is different to expected type `{}` of the function",
+                                v, annotate.get_type()
+                            );
+                            return None;
+                        }
+                    } else {
+                        func_scope.insert(k.expr.get_string(), v);
+                    }
                 }
 
                 let mut result = None;
@@ -796,7 +800,7 @@ enum Type {
 #[derive(Clone, Debug)]
 enum Function {
     BuiltIn(fn(Vec<Type>, &mut HashMap<String, Type>) -> Option<Type>),
-    UserDefined(Vec<String>, Vec<Type>),
+    UserDefined(Vec<Expr>, Vec<Type>),
 }
 
 impl Type {
@@ -871,7 +875,10 @@ impl Debug for Type {
             Type::Function(Function::UserDefined(args, code)) => {
                 format!(
                     "(lambda '({}) {})",
-                    args.join(" "),
+                    args.iter()
+                        .map(|i| format!("{i:?}"))
+                        .collect::<Vec<String>>()
+                        .join(" "),
                     code.iter()
                         .map(|i| format!("{i:?}"))
                         .collect::<Vec<String>>()
