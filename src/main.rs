@@ -29,7 +29,9 @@ fn main() {
 
     if let Some(path) = args.file {
         if let Ok(code) = read_to_string(path) {
-            parse(code).eval(scope);
+            if let Some(ast) = parse(code) {
+                ast.eval(scope);
+            }
         } else {
             eprintln!("Error! opening file is fault");
         }
@@ -37,8 +39,10 @@ fn main() {
         println!("Statia {VERSION}");
         loop {
             let program = parse(input("> "));
-            if let Some(result) = program.eval(scope) {
-                println!("{:?}", result);
+            if let Some(program) = program {
+                if let Some(result) = program.eval(scope) {
+                    println!("{:?}", result);
+                }
             }
         }
     }
@@ -443,8 +447,8 @@ fn builtin_function() -> HashMap<String, Type> {
     ])
 }
 
-fn parse(source: String) -> Expr {
-    let tokens = tokenize(source);
+fn parse(source: String) -> Option<Expr> {
+    let tokens = tokenize(source)?;
     let mut expr: Vec<Expr> = vec![];
     for token in tokens {
         let annotate = if token.len() == 2 {
@@ -490,13 +494,13 @@ fn parse(source: String) -> Expr {
             token.remove(0);
             token.remove(token.len() - 1);
             expr.push(Expr {
-                expr: parse(token).expr,
+                expr: parse(token)?.expr,
                 annotate,
             });
         } else if token.starts_with("'(") && token.ends_with(')') {
             token.remove(0);
             expr.push(Expr {
-                expr: Type::List(parse(token).expr.get_list()),
+                expr: Type::List(parse(token)?.expr.get_list()),
                 annotate,
             });
         } else {
@@ -507,17 +511,17 @@ fn parse(source: String) -> Expr {
         }
     }
 
-    if expr.len() == 1 {
+    Some(if expr.len() == 1 {
         expr[0].clone()
     } else {
         Expr {
             expr: Type::Expr(expr),
             annotate: None,
         }
-    }
+    })
 }
 
-fn tokenize(input: String) -> Vec<Vec<String>> {
+fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
     let mut tokens: Vec<Vec<String>> = Vec::new();
     let mut current_token = String::new();
     let mut after_colon = String::new();
@@ -541,7 +545,12 @@ fn tokenize(input: String) -> Vec<Vec<String>> {
                 } else {
                     current_token.push(c);
                 }
-                in_parentheses -= 1;
+                if in_parentheses > 0 {
+                    in_parentheses -= 1;
+                } else {
+                    eprintln!("Error! there's duplicate end of the parentheses");
+                    return None;
+                }
             }
             ' ' | '　' | '\n' | '\t' | '\r' if !in_quote => {
                 if in_parentheses != 0 {
@@ -591,6 +600,16 @@ fn tokenize(input: String) -> Vec<Vec<String>> {
         }
     }
 
+    // Syntax error check
+    if in_quote {
+        eprintln!("Error! there's not end of the quote");
+        return None;
+    }
+    if in_parentheses != 0 {
+        eprintln!("Error! there's not end of the parentheses");
+        return None;
+    }
+
     if in_parentheses == 0 && !current_token.is_empty() {
         if is_colon {
             tokens.push(vec![current_token.clone(), after_colon]);
@@ -600,7 +619,7 @@ fn tokenize(input: String) -> Vec<Vec<String>> {
             current_token.clear();
         }
     }
-    tokens
+    Some(tokens)
 }
 
 #[derive(Clone)]
