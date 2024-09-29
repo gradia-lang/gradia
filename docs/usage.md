@@ -49,3 +49,13 @@
 ```
 '(1:number 2:number 3:number "abc":string):list
 ```
+
+## Plural expression
+```
+(eval '(print "hello") '(+ 1 2))
+```
+
+### With type annotation
+```
+(eval:function '(print:function "hello":string):list '(+:function 1:number 2:number):list):number
+```
