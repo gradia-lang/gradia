@@ -486,7 +486,7 @@ fn builtin_function() -> HashMap<String, Type> {
         (
             "exit".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                exit(params.get(0)?.get_number() as i32)
+                exit(params.get(0).unwrap_or(&Type::Number(0.0)).get_number() as i32)
             })),
         ),
         ("new-line".to_string(), Type::String("\n".to_string())),
@@ -713,6 +713,14 @@ impl Expr {
             if let Type::Function(Function::BuiltIn(func)) = expr.get(0)? {
                 func(expr.get(1..)?.to_vec(), scope)?
             } else if let Type::Function(Function::UserDefined(args, code)) = expr.get(0)? {
+                if args.len() != expr.get(1..)?.len() {
+                    eprintln!(
+                        "Error! the passed arguments length {} is different to expected length {} of the function's arguments",
+                        expr.get(1..)?.len(), args.len()
+                    );
+                    return None;
+                }
+
                 let mut func_scope = scope.clone();
                 for (k, v) in args.iter().zip(expr.get(1..)?.to_vec()) {
                     if let Some(annotate) = k.annotate.clone() {
