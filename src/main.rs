@@ -40,23 +40,23 @@ fn main() {
         }
     } else {
         println!("Statia {VERSION}");
-        loop {
-            if let Some(lines) = tokenize(input("> ")) {
-                for line in lines {
-                    if let Some(ast) = parse(line) {
-                        if let Some(result) = ast.eval(scope) {
-                            println!("{:?}", result);
+        if let Ok(mut rl) = DefaultEditor::new() {
+            loop {
+                if let Ok(code) = rl.readline("> ") {
+                    rl.add_history_entry(&code).unwrap_or_default();
+                    if let Some(lines) = tokenize(code) {
+                        for line in lines {
+                            if let Some(ast) = parse(line) {
+                                if let Some(result) = ast.eval(scope) {
+                                    println!("{:?}", result);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     }
-}
-
-/// Get standard input  using rustyline
-fn input(prompt: &str) -> String {
-    DefaultEditor::new().unwrap().readline(prompt).unwrap()
 }
 
 fn builtin_function() -> HashMap<String, Type> {
@@ -252,7 +252,15 @@ fn builtin_function() -> HashMap<String, Type> {
         (
             "input".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::String(input(&params.get(0)?.get_string())))
+                Some(Type::String(if let Ok(mut rl) = DefaultEditor::new() {
+                    if let Ok(input) = rl.readline(&params.get(0)?.get_string()) {
+                        input
+                    } else {
+                        return None;
+                    }
+                } else {
+                    return None;
+                }))
             })),
         ),
         (
