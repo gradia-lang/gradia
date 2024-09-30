@@ -37,7 +37,7 @@
 
 ### With type annotation
 ```
-(lambda:function '(n:symbol):list '(*:function n:nunber 2:number):list):function
+(lambda:function '(n:number):list '(*:function n:nunber 2:number):list):function
 ```
 
 ## List
