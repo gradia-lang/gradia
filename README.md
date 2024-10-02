@@ -1,4 +1,4 @@
 # Gradia
 Lisp like programming language that can give type annotation for gradual typing.
 
-<img width="935" alt="image" src="https://github.com/user-attachments/assets/4539d36e-08b1-4cbe-9343-d4992d5af5d3">
+<img width="921" alt="image" src="https://github.com/user-attachments/assets/7a34f54e-cfe5-4eb2-a35a-fce3e33dd669">
