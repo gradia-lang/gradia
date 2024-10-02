@@ -1,4 +1,4 @@
-# Document of Statia Programming Language
+# Document of Gradia Programming Language
 
 ## Calculation
 ```

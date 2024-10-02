@@ -158,6 +158,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "gradia"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "rustyline",
+]
+
+[[package]]
 name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -291,14 +299,6 @@ name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
-
-[[package]]
-name = "statia"
-version = "0.1.0"
-dependencies = [
- "clap",
- "rustyline",
-]
 
 [[package]]
 name = "strsim"

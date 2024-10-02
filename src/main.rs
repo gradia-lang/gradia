@@ -11,7 +11,7 @@ const VERSION: &str = "0.1.0";
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "Statia",
+    name = "Gradia",
     version = VERSION,
     author = "梶塚太智, kajizukataichi@outlook.jp",
     about = "Lisp like programming language that can add type annotation",
@@ -39,7 +39,7 @@ fn main() {
             eprintln!("Error! opening file is fault");
         }
     } else {
-        println!("Statia {VERSION}");
+        println!("Gradia {VERSION}");
         if let Ok(mut rl) = DefaultEditor::new() {
             loop {
                 if let Ok(code) = rl.readline("> ") {
