@@ -297,6 +297,21 @@ pub fn builtin_function() -> HashMap<String, Type> {
             })),
         ),
         (
+            "car".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(params.get(0)?.get_list().get(0)?.expr.clone())
+            })),
+        ),
+        (
+            "cdr".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                let list = params.get(0)?;
+                Some(Type::List(
+                    list.get_list()[1..list.get_list().len()].to_vec(),
+                ))
+            })),
+        ),
+        (
             "range".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() == 1 {
