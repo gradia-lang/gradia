@@ -1,2 +1,3 @@
 [workspace]
 members = ["gradia-core", "gradia-cli", "gradia-wasm"]
+resolver = "2"
