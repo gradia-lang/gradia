@@ -47,7 +47,9 @@ impl Gradia {
         if let Some(lines) = tokenize(code) {
             for line in lines {
                 if let Some(ast) = parse(line) {
-                    result = format!("{:?}", ast.eval(&mut self.scope));
+                    if let Some(result) = ast.eval(&mut self.scope) {
+                        result = format!("{:?}", result);
+                    }
                 }
             }
         }
