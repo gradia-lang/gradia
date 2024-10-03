@@ -703,17 +703,7 @@ impl Expr {
             let expr = {
                 let mut new = vec![];
                 for i in expr {
-                    let temp = i.eval(scope)?;
-                    new.push(if let Type::Symbol(name) = temp.clone() {
-                        // Loading variable from scope
-                        if let Some(value) = scope.get(&name).to_owned() {
-                            value.to_owned()
-                        } else {
-                            temp
-                        }
-                    } else {
-                        temp
-                    });
+                    new.push(i.eval(scope)?)
                 }
                 new
             };
@@ -860,8 +850,8 @@ impl Type {
             Type::Number(n) => n.to_string(),
             Type::String(s) => s.to_owned(),
             Type::Bool(b) => b.to_string(),
-            Type::Function(_) | Type::Expr(_) | Type::List(_) | Type::Null => String::new(),
             Type::Symbol(v) => v.to_owned(),
+            other => format!("{other:?}"),
         }
     }
 
