@@ -88,7 +88,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "print".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                println!(
+                print!(
                     "{}",
                     params
                         .iter()
