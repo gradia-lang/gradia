@@ -16,6 +16,10 @@ struct Cli {
     /// Script file to be running
     #[arg(index = 1)]
     file: Option<String>,
+
+    /// Run the code quickly
+    #[arg(short = 'l', long, name = "CODE")]
+    one_liner: Option<String>,
 }
 
 fn main() {
@@ -33,6 +37,14 @@ fn main() {
             }
         } else {
             eprintln!("Error! opening file is fault");
+        }
+    } else if let Some(code) = args.one_liner {
+        if let Some(lines) = tokenize(code) {
+            for line in lines {
+                if let Some(ast) = parse(line) {
+                    ast.eval(scope);
+                }
+            }
         }
     } else {
         println!("Gradia {VERSION}");
