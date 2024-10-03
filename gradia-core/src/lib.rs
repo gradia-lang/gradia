@@ -81,7 +81,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         .iter()
                         .map(|i| i.get_string())
                         .collect::<Vec<String>>()
-                        .join(""),
+                        .concat(),
                 ))
             })),
         ),
@@ -94,7 +94,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         .iter()
                         .map(|i| i.get_string())
                         .collect::<Vec<String>>()
-                        .join(" "),
+                        .concat()
                 );
                 Some(Type::Null)
             })),
@@ -792,7 +792,7 @@ pub enum Function {
 }
 
 impl Type {
-    fn get_number(&self) -> f64 {
+    pub fn get_number(&self) -> f64 {
         match &self {
             Type::Number(n) => n.to_owned(),
             Type::String(s) => s.trim().parse().unwrap_or(0.0),
@@ -809,7 +809,7 @@ impl Type {
         }
     }
 
-    fn get_string(&self) -> String {
+    pub fn get_string(&self) -> String {
         match &self {
             Type::Number(n) => n.to_string(),
             Type::String(s) => s.to_owned(),
@@ -819,7 +819,7 @@ impl Type {
         }
     }
 
-    fn get_bool(&self) -> bool {
+    pub fn get_bool(&self) -> bool {
         match &self {
             Type::Number(n) => *n != 0.0,
             Type::String(s) | Type::Symbol(s) => !s.is_empty(),
@@ -829,7 +829,7 @@ impl Type {
         }
     }
 
-    fn get_type(&self) -> String {
+    pub fn get_type(&self) -> String {
         match &self {
             Type::Number(_) => "number".to_string(),
             Type::String(_) => "string".to_string(),
@@ -842,7 +842,7 @@ impl Type {
         }
     }
 
-    fn get_list(&self) -> Vec<Expr> {
+    pub fn get_list(&self) -> Vec<Expr> {
         match &self {
             Type::Expr(e) => e.to_owned(),
             Type::List(l) => l.to_owned(),
