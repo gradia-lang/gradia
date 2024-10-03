@@ -1,65 +1,11 @@
-use clap::Parser;
-use rustyline::DefaultEditor;
 use std::{
     collections::HashMap,
     fmt::{self, Debug},
-    fs::read_to_string,
+    io::{self, Write},
     process::exit,
 };
 
-const VERSION: &str = "0.1.0";
-
-#[derive(Parser, Debug)]
-#[command(
-    name = "Gradia",
-    version = VERSION,
-    author = "梶塚太智, kajizukataichi@outlook.jp",
-    about = "Lisp like programming language that can add type annotation",
-)]
-struct Cli {
-    /// Script file to be running
-    #[arg(index = 1)]
-    file: Option<String>,
-}
-
-fn main() {
-    let scope = &mut builtin_function();
-    let args = Cli::parse();
-
-    if let Some(path) = args.file {
-        if let Ok(code) = read_to_string(path) {
-            if let Some(lines) = tokenize(code) {
-                for line in lines {
-                    if let Some(ast) = parse(line) {
-                        ast.eval(scope);
-                    }
-                }
-            }
-        } else {
-            eprintln!("Error! opening file is fault");
-        }
-    } else {
-        println!("Gradia {VERSION}");
-        if let Ok(mut rl) = DefaultEditor::new() {
-            loop {
-                if let Ok(code) = rl.readline("> ") {
-                    rl.add_history_entry(&code).unwrap_or_default();
-                    if let Some(lines) = tokenize(code) {
-                        for line in lines {
-                            if let Some(ast) = parse(line) {
-                                if let Some(result) = ast.eval(scope) {
-                                    println!("{:?}", result);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn builtin_function() -> HashMap<String, Type> {
+pub fn builtin_function() -> HashMap<String, Type> {
     HashMap::from([
         (
             "+".to_string(),
@@ -151,6 +97,22 @@ fn builtin_function() -> HashMap<String, Type> {
                         .join(" "),
                 );
                 Some(Type::Null)
+            })),
+        ),
+        (
+            "input".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::String({
+                    let mut input = String::new();
+                    if let Some(prompt) = params.get(0) {
+                        print!("{}", prompt.get_string());
+                    }
+                    io::stdout().flush().unwrap();
+                    match io::stdin().read_line(&mut input) {
+                        Ok(_) => input.trim().to_string(),
+                        Err(_) => return None,
+                    }
+                }))
             })),
         ),
         (
@@ -247,20 +209,6 @@ fn builtin_function() -> HashMap<String, Type> {
             "type".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::String(params.get(0)?.get_type()))
-            })),
-        ),
-        (
-            "input".to_string(),
-            Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::String(if let Ok(mut rl) = DefaultEditor::new() {
-                    if let Ok(input) = rl.readline(&params.get(0)?.get_string()) {
-                        input
-                    } else {
-                        return None;
-                    }
-                } else {
-                    return None;
-                }))
             })),
         ),
         (
@@ -492,6 +440,22 @@ fn builtin_function() -> HashMap<String, Type> {
             })),
         ),
         (
+            "split".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::List(
+                    params
+                        .get(0)?
+                        .get_string()
+                        .split(&params.get(1)?.get_string())
+                        .map(|i| Expr {
+                            expr: Type::String(i.to_string()),
+                            annotate: None,
+                        })
+                        .collect::<Vec<Expr>>(),
+                ))
+            })),
+        ),
+        (
             "exit".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 exit(params.get(0).unwrap_or(&Type::Number(0.0)).get_number() as i32)
@@ -503,7 +467,7 @@ fn builtin_function() -> HashMap<String, Type> {
     ])
 }
 
-fn parse(token: Vec<String>) -> Option<Expr> {
+pub fn parse(token: Vec<String>) -> Option<Expr> {
     // Setting type annotation
     let annotate = if token.len() == 2 {
         match token[1].as_str() {
@@ -589,7 +553,7 @@ fn parse(token: Vec<String>) -> Option<Expr> {
     )
 }
 
-fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
+pub fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
     let mut tokens: Vec<Vec<String>> = Vec::new();
     let mut current_token = String::new();
     let mut after_colon = String::new();
@@ -691,13 +655,13 @@ fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
 }
 
 #[derive(Clone)]
-struct Expr {
+pub struct Expr {
     expr: Type,
     annotate: Option<Type>,
 }
 
 impl Expr {
-    fn eval(&self, scope: &mut HashMap<String, Type>) -> Option<Type> {
+    pub fn eval(&self, scope: &mut HashMap<String, Type>) -> Option<Type> {
         let result = if let Type::Expr(expr) = &self.expr {
             // Prepare expression
             let expr = {
@@ -810,7 +774,7 @@ impl Debug for Expr {
 }
 
 #[derive(Clone)]
-enum Type {
+pub enum Type {
     Function(Function),
     Expr(Vec<Expr>),
     List(Vec<Expr>),
@@ -822,7 +786,7 @@ enum Type {
 }
 
 #[derive(Clone, Debug)]
-enum Function {
+pub enum Function {
     BuiltIn(fn(Vec<Type>, &mut HashMap<String, Type>) -> Option<Type>),
     UserDefined(Vec<Expr>, Vec<Type>),
 }
