@@ -690,6 +690,7 @@ impl Expr {
             if let Type::Function(Function::BuiltIn(func)) = expr.get(0)? {
                 func(expr.get(1..)?.to_vec(), scope)?
             } else if let Type::Function(Function::UserDefined(args, code)) = expr.get(0)? {
+                // Check arguments length
                 if args.len() != expr.get(1..)?.len() {
                     eprintln!(
                         "Error! the passed arguments length {} is different to expected length {} of the function's arguments",
@@ -698,6 +699,7 @@ impl Expr {
                     return None;
                 }
 
+                // Setting arguemnt and its value
                 let mut func_scope = scope.clone();
                 for (k, v) in args.iter().zip(expr.get(1..)?.to_vec()) {
                     if let Some(annotate) = k.annotate.clone() {
