@@ -441,6 +441,23 @@ pub fn builtin_function() -> HashMap<String, Type> {
             })),
         ),
         (
+            "len".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::Number(params.get(0)?.get_list().len() as f64))
+            })),
+        ),
+        (
+            "repeat".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Some(Type::String(
+                    params
+                        .get(0)?
+                        .get_string()
+                        .repeat(params.get(1)?.get_number() as usize),
+                ))
+            })),
+        ),
+        (
             "join".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 Some(Type::String(
