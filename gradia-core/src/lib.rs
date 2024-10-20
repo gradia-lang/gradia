@@ -638,7 +638,7 @@ pub fn tokenize(input: String) -> Result<Vec<Vec<String>>, GradiaError> {
                     in_parentheses -= 1;
                 } else {
                     return Err(GradiaError::Syntax(
-                        "Error! there's duplicate end of the parentheses".to_string(),
+                        "there's duplicate end of the parentheses".to_string(),
                     ));
                 }
             }
@@ -693,12 +693,12 @@ pub fn tokenize(input: String) -> Result<Vec<Vec<String>>, GradiaError> {
     // Syntax error check
     if in_quote {
         return Err(GradiaError::Syntax(
-            "Error! there's not end of the quote".to_string(),
+            "there's not end of the quote".to_string(),
         ));
     }
     if in_parentheses != 0 {
         return Err(GradiaError::Syntax(
-            "Error! there's not end of the parentheses".to_string(),
+            "there's not end of the parentheses".to_string(),
         ));
     }
 
@@ -739,7 +739,7 @@ impl Expr {
                 if args.len() != expr.get(1..).unwrap().len() {
                     return
                     Err(GradiaError::Runtime(format!(
-                        "Error! the passed arguments length {} is different to expected length {} of the function's arguments",
+                        "the passed arguments length {} is different to expected length {} of the function's arguments",
                         expr.get(1..).unwrap().len(), args.len()
                     ))) ;
                 }
@@ -755,7 +755,7 @@ impl Expr {
                         } else {
                             return
                             Err(GradiaError::Runtime(format!(
-                                "Error! the passed argument value `{:?}` is different to expected type `{}` of the function",
+                                "the passed argument value `{:?}` is different to expected type `{}` of the function",
                                 v, annotate.get_type()
                             )));
                         }
@@ -813,7 +813,7 @@ impl Expr {
                 Ok(result)
             } else {
                 return Err(GradiaError::Runtime(format!(
-                    "Error! the result value `{:?}` is different to expected type `{}` ",
+                    "the result value `{:?}` is different to expected type `{}`",
                     result,
                     annotate.get_type()
                 )));
