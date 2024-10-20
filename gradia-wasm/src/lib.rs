@@ -47,11 +47,14 @@ impl Gradia {
         let mut result = String::new();
         if let Ok(lines) = tokenize(code) {
             for line in lines {
-                if let Ok(ast) = parse(line) {
-                    result = match ast.eval(&mut self.scope) {
-                        Ok(value) => format!("{:?}", value),
-                        Err(err) => format!("{}", err),
+                match parse(line) {
+                    Ok(ast) => {
+                        result = match ast.eval(&mut self.scope) {
+                            Ok(value) => format!("{:?}", value),
+                            Err(err) => format!("{}", err),
+                        }
                     }
+                    Err(err) => result = format!("{}", err),
                 }
             }
         }
