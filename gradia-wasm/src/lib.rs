@@ -19,24 +19,25 @@ impl Gradia {
                 scope.insert(
                     "stdout".to_string(),
                     Type::String(
-                        scope.get("stdout")?.get_string()
+                        scope.get("stdout").unwrap().get_string()
                             + &params
                                 .iter()
                                 .map(|i| i.get_string())
                                 .collect::<Vec<String>>()
                                 .concat(),
                     ),
-                )
+                );
+                Result::Ok(Type::Null)
             })),
         );
         Gradia { scope }
     }
 
     pub fn run(&mut self, code: String) {
-        if let Some(lines) = tokenize(code) {
+        if let Ok(lines) = tokenize(code) {
             for line in lines {
-                if let Some(ast) = parse(line) {
-                    ast.eval(&mut self.scope);
+                if let Ok(ast) = parse(line) {
+                    ast.eval(&mut self.scope).unwrap();
                 }
             }
         }
@@ -44,11 +45,12 @@ impl Gradia {
 
     pub fn eval(&mut self, code: String) -> String {
         let mut result = String::new();
-        if let Some(lines) = tokenize(code) {
+        if let Ok(lines) = tokenize(code) {
             for line in lines {
-                if let Some(ast) = parse(line) {
-                    if let Some(value) = ast.eval(&mut self.scope) {
-                        result = format!("{:?}", value);
+                if let Ok(ast) = parse(line) {
+                    result = match ast.eval(&mut self.scope) {
+                        Ok(value) => format!("{:?}", value),
+                        Err(err) => format!("{}", err),
                     }
                 }
             }

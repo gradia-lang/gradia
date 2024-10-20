@@ -4,6 +4,7 @@ use std::{
     io::{self, Write},
     process::exit,
 };
+use thiserror::Error;
 
 pub fn builtin_function() -> HashMap<String, Type> {
     HashMap::from([
@@ -11,72 +12,72 @@ pub fn builtin_function() -> HashMap<String, Type> {
             "+".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = *params.get(0)?;
+                let mut result: f64 = *params.get(0).unwrap();
                 for i in params[1..params.len()].to_vec().iter() {
                     result += i;
                 }
-                Some(Type::Number(result))
+                Ok(Type::Number(result))
             })),
         ),
         (
             "-".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = *params.get(0)?;
+                let mut result: f64 = *params.get(0).unwrap();
                 for i in params[1..params.len()].to_vec().iter() {
                     result -= i;
                 }
-                Some(Type::Number(result))
+                Ok(Type::Number(result))
             })),
         ),
         (
             "*".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = *params.get(0)?;
+                let mut result: f64 = *params.get(0).unwrap();
                 for i in params[1..params.len()].to_vec().iter() {
                     result *= i;
                 }
-                Some(Type::Number(result))
+                Ok(Type::Number(result))
             })),
         ),
         (
             "/".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = *params.get(0)?;
+                let mut result: f64 = *params.get(0).unwrap();
                 for i in params[1..params.len()].to_vec().iter() {
                     result /= i;
                 }
-                Some(Type::Number(result))
+                Ok(Type::Number(result))
             })),
         ),
         (
             "%".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = *params.get(0)?;
+                let mut result: f64 = *params.get(0).unwrap();
                 for i in params[1..params.len()].to_vec().iter() {
                     result %= i;
                 }
-                Some(Type::Number(result))
+                Ok(Type::Number(result))
             })),
         ),
         (
             "^".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = *params.get(0)?;
+                let mut result: f64 = *params.get(0).unwrap();
                 for i in params[1..params.len()].to_vec().iter() {
                     result = result.powf(i.to_owned());
                 }
-                Some(Type::Number(result))
+                Ok(Type::Number(result))
             })),
         ),
         (
             "concat".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::String(
+                Ok(Type::String(
                     params
                         .iter()
                         .map(|i| i.get_string())
@@ -96,13 +97,13 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         .collect::<Vec<String>>()
                         .concat()
                 );
-                Some(Type::Null)
+                Ok(Type::Null)
             })),
         ),
         (
             "input".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::String({
+                Ok(Type::String({
                     let mut input = String::new();
                     if let Some(prompt) = params.get(0) {
                         print!("{}", prompt.get_string());
@@ -110,7 +111,9 @@ pub fn builtin_function() -> HashMap<String, Type> {
                     io::stdout().flush().unwrap();
                     match io::stdin().read_line(&mut input) {
                         Ok(_) => input.trim().to_string(),
-                        Err(_) => return None,
+                        Err(_) => {
+                            return Err(GradiaError::Runtime("Something is wrong".to_string()))
+                        }
                     }
                 }))
             })),
@@ -118,7 +121,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool({
+                Ok(Type::Bool({
                     let params: Vec<String> = params.iter().map(|i| format!("{i:?}")).collect();
                     params.windows(2).all(|window| window[0] == window[1])
                 }))
@@ -127,7 +130,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "!=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool({
+                Ok(Type::Bool({
                     let params: Vec<String> = params.iter().map(|i| format!("{i:?}")).collect();
                     params.windows(2).all(|window| window[0] != window[1])
                 }))
@@ -136,7 +139,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             ">".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool({
+                Ok(Type::Bool({
                     let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
                     params.windows(2).all(|window| window[0] > window[1])
                 }))
@@ -145,7 +148,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             ">=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool({
+                Ok(Type::Bool({
                     let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
                     params.windows(2).all(|window| window[0] >= window[1])
                 }))
@@ -154,7 +157,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "<".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool({
+                Ok(Type::Bool({
                     let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
                     params.windows(2).all(|window| window[0] < window[1])
                 }))
@@ -163,7 +166,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "<=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool({
+                Ok(Type::Bool({
                     let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
                     params.windows(2).all(|window| window[0] < window[1])
                 }))
@@ -172,7 +175,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "&".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool({
+                Ok(Type::Bool({
                     let params: Vec<bool> = params.iter().map(|i| i.get_bool()).collect();
                     params.iter().all(|x| *x)
                 }))
@@ -181,7 +184,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "|".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool({
+                Ok(Type::Bool({
                     let params: Vec<bool> = params.iter().map(|i| i.get_bool()).collect();
                     params.iter().any(|x| *x)
                 }))
@@ -190,31 +193,31 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "!".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Bool(!params.get(0)?.get_bool()))
+                Ok(Type::Bool(!params.get(0).unwrap().get_bool()))
             })),
         ),
         (
             "cast".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                match params.get(1)?.get_string().as_str() {
-                    "number" => Some(Type::Number(params.get(0)?.get_number())),
-                    "string" => Some(Type::String(params.get(0)?.get_string())),
-                    "bool" => Some(Type::Bool(params.get(0)?.get_bool())),
-                    "list" => Some(Type::List(params.get(0)?.get_list())),
-                    _ => Some(params.get(0)?.clone()),
+                match params.get(1).unwrap().get_string().as_str() {
+                    "number" => Ok(Type::Number(params.get(0).unwrap().get_number())),
+                    "string" => Ok(Type::String(params.get(0).unwrap().get_string())),
+                    "bool" => Ok(Type::Bool(params.get(0).unwrap().get_bool())),
+                    "list" => Ok(Type::List(params.get(0).unwrap().get_list())),
+                    _ => Ok(params.get(0).unwrap().clone()),
                 }
             })),
         ),
         (
             "type".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::String(params.get(0)?.get_type()))
+                Ok(Type::String(params.get(0).unwrap().get_type()))
             })),
         ),
         (
             "eval".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let mut result = None;
+                let mut result = Err(GradiaError::Runtime("Something is wrong".to_string()));
                 for expr in params {
                     result = Expr {
                         expr: Type::Expr(expr.get_list()),
@@ -235,47 +238,47 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         annotate: None,
                     });
                 }
-                Some(Type::List(result))
+                Ok(Type::List(result))
             })),
         ),
         (
             "define".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let value: Type;
-                if let Type::List(args) = params.get(0)? {
+                if let Type::List(args) = params.get(0).unwrap() {
                     value = Type::Function(Function::UserDefined(
-                        args.get(1..)?.to_vec(),
-                        params.get(1..)?.to_owned(),
+                        args.get(1..).unwrap().to_vec(),
+                        params.get(1..).unwrap().to_owned(),
                     ));
-                    scope.insert(args.get(0)?.expr.get_string(), value.clone());
+                    scope.insert(args.get(0).unwrap().expr.get_string(), value.clone());
                 } else {
-                    value = params.get(1)?.to_owned();
-                    scope.insert(params.get(0)?.get_string(), value.clone());
+                    value = params.get(1).unwrap().to_owned();
+                    scope.insert(params.get(0).unwrap().get_string(), value.clone());
                 }
-                Some(value)
+                Ok(value)
             })),
         ),
         (
             "lambda".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Function(Function::UserDefined(
-                    params.get(0)?.get_list(),
-                    params.get(1..)?.to_vec(),
+                Ok(Type::Function(Function::UserDefined(
+                    params.get(0).unwrap().get_list(),
+                    params.get(1..).unwrap().to_vec(),
                 )))
             })),
         ),
         (
             "if-else".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                if params.get(0)?.get_bool() {
+                if params.get(0).unwrap().get_bool() {
                     Expr {
-                        expr: Type::Expr(params.get(1)?.clone().get_list()),
+                        expr: Type::Expr(params.get(1).unwrap().clone().get_list()),
                         annotate: None,
                     }
                     .eval(scope)
                 } else {
                     Expr {
-                        expr: Type::Expr(params.get(2)?.clone().get_list()),
+                        expr: Type::Expr(params.get(2).unwrap().clone().get_list()),
                         annotate: None,
                     }
                     .eval(scope)
@@ -285,28 +288,35 @@ pub fn builtin_function() -> HashMap<String, Type> {
         (
             "when".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                if params.get(0)?.get_bool() {
+                if params.get(0).unwrap().get_bool() {
                     Expr {
-                        expr: Type::Expr(params.get(1)?.clone().get_list()),
+                        expr: Type::Expr(params.get(1).unwrap().clone().get_list()),
                         annotate: None,
                     }
                     .eval(scope)
                 } else {
-                    Some(Type::Null)
+                    Ok(Type::Null)
                 }
             })),
         ),
         (
             "car".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(params.get(0)?.get_list().get(0)?.expr.clone())
+                Ok(params
+                    .get(0)
+                    .unwrap()
+                    .get_list()
+                    .get(0)
+                    .unwrap()
+                    .expr
+                    .clone())
             })),
         ),
         (
             "cdr".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                let list = params.get(0)?;
-                Some(Type::List(
+                let list = params.get(0).unwrap();
+                Ok(Type::List(
                     list.get_list()[1..list.get_list().len()].to_vec(),
                 ))
             })),
@@ -324,7 +334,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         });
                         current += 1.0;
                     }
-                    Some(Type::List(range))
+                    Ok(Type::List(range))
                 } else if params.len() == 2 {
                     let mut range: Vec<Expr> = vec![];
                     let mut current: f64 = params[0].get_number();
@@ -335,7 +345,7 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         });
                         current += 1.0;
                     }
-                    Some(Type::List(range))
+                    Ok(Type::List(range))
                 } else if params.len() >= 3 {
                     let mut range: Vec<Expr> = vec![];
                     let mut current: f64 = params[0].get_number();
@@ -346,9 +356,9 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         });
                         current += params[2].get_number();
                     }
-                    Some(Type::List(range))
+                    Ok(Type::List(range))
                 } else {
-                    Some(Type::Null)
+                    Ok(Type::Null)
                 }
             })),
         ),
@@ -356,12 +366,12 @@ pub fn builtin_function() -> HashMap<String, Type> {
             "map".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = vec![];
-                let func = if let Type::Function(func) = params.get(1)? {
+                let func = if let Type::Function(func) = params.get(1).unwrap() {
                     func
                 } else {
-                    return None;
+                    return Err(GradiaError::Runtime("Something is wrong".to_string()));
                 };
-                for i in params.get(0)?.get_list() {
+                for i in params.get(0).unwrap().get_list() {
                     result.push(Expr {
                         expr: Expr {
                             expr: Type::Expr(vec![
@@ -373,23 +383,24 @@ pub fn builtin_function() -> HashMap<String, Type> {
                             ]),
                             annotate: None,
                         }
-                        .eval(scope)?,
+                        .eval(scope)
+                        .unwrap(),
                         annotate: None,
                     });
                 }
-                Some(Type::List(result))
+                Ok(Type::List(result))
             })),
         ),
         (
             "filter".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = vec![];
-                let func = if let Type::Function(func) = params.get(1)? {
+                let func = if let Type::Function(func) = params.get(1).unwrap() {
                     func
                 } else {
-                    return None;
+                    return Err(GradiaError::Runtime("Something is wrong".to_string()));
                 };
-                for i in params.get(0)?.get_list() {
+                for i in params.get(0).unwrap().get_list() {
                     if (Expr {
                         expr: Type::Expr(vec![
                             Expr {
@@ -400,27 +411,28 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         ]),
                         annotate: None,
                     })
-                    .eval(scope)?
+                    .eval(scope)
+                    .unwrap()
                     .get_bool()
                     {
                         result.push(i)
                     }
                 }
-                Some(Type::List(result))
+                Ok(Type::List(result))
             })),
         ),
         (
             "reduce".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let func = if let Type::Function(func) = params.get(2)? {
+                let func = if let Type::Function(func) = params.get(2).unwrap() {
                     func
                 } else {
-                    return None;
+                    return Err(GradiaError::Runtime("Something is wrong".to_string()));
                 };
-                let mut result = params.get(1)?.to_owned();
+                let mut result = params.get(1).unwrap().to_owned();
                 let mut scope = scope.clone();
 
-                for i in params.get(0)?.get_list() {
+                for i in params.get(0).unwrap().get_list() {
                     result = Expr {
                         expr: Type::Expr(vec![
                             Expr {
@@ -435,50 +447,54 @@ pub fn builtin_function() -> HashMap<String, Type> {
                         ]),
                         annotate: None,
                     }
-                    .eval(&mut scope)?;
+                    .eval(&mut scope)
+                    .unwrap();
                 }
-                Some(result.to_owned())
+                Ok(result.to_owned())
             })),
         ),
         (
             "len".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::Number(params.get(0)?.get_list().len() as f64))
+                Ok(Type::Number(params.get(0).unwrap().get_list().len() as f64))
             })),
         ),
         (
             "repeat".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::String(
+                Ok(Type::String(
                     params
-                        .get(0)?
+                        .get(0)
+                        .unwrap()
                         .get_string()
-                        .repeat(params.get(1)?.get_number() as usize),
+                        .repeat(params.get(1).unwrap().get_number() as usize),
                 ))
             })),
         ),
         (
             "join".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::String(
+                Ok(Type::String(
                     params
-                        .get(0)?
+                        .get(0)
+                        .unwrap()
                         .get_list()
                         .iter()
                         .map(|i| i.expr.get_string())
                         .collect::<Vec<String>>()
-                        .join(&params.get(1)?.get_string()),
+                        .join(&params.get(1).unwrap().get_string()),
                 ))
             })),
         ),
         (
             "split".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Some(Type::List(
+                Ok(Type::List(
                     params
-                        .get(0)?
+                        .get(0)
+                        .unwrap()
                         .get_string()
-                        .split(&params.get(1)?.get_string())
+                        .split(&params.get(1).unwrap().get_string())
                         .map(|i| Expr {
                             expr: Type::String(i.to_string()),
                             annotate: None,
@@ -499,12 +515,21 @@ pub fn builtin_function() -> HashMap<String, Type> {
     ])
 }
 
-pub fn parse(token: Vec<String>) -> Option<Expr> {
+#[derive(Debug, Error)]
+pub enum GradiaError {
+    #[error("Runtime Error! {0}")]
+    Runtime(String),
+
+    #[error("Syntax Error! {0}")]
+    Syntax(String),
+}
+
+pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
     // Setting type annotation
     let annotate = if token.len() == 2 {
         match token[1].as_str() {
-            "function" => Some(Type::Function(Function::BuiltIn(|x, _| {
-                Some(x.get(0)?.clone())
+            "function" => Some(Type::Function(Function::BuiltIn(|_, _| {
+                Err(GradiaError::Runtime("Something is wrong".to_string()))
             }))),
             "list" => Some(Type::List(vec![])),
             "symbol" => Some(Type::Symbol(String::new())),
@@ -519,7 +544,7 @@ pub fn parse(token: Vec<String>) -> Option<Expr> {
     };
 
     let mut token = token[0].trim().to_string();
-    Some(
+    Ok(
         // Number case
         if let Ok(n) = token.parse::<f64>() {
             Expr {
@@ -553,8 +578,8 @@ pub fn parse(token: Vec<String>) -> Option<Expr> {
             Expr {
                 expr: {
                     let mut list = vec![];
-                    for i in tokenize(token)? {
-                        list.push(parse(i)?)
+                    for i in tokenize(token).unwrap() {
+                        list.push(parse(i).unwrap())
                     }
                     Type::Expr(list)
                 },
@@ -568,8 +593,8 @@ pub fn parse(token: Vec<String>) -> Option<Expr> {
             Expr {
                 expr: {
                     let mut list = vec![];
-                    for i in tokenize(token)? {
-                        list.push(parse(i)?)
+                    for i in tokenize(token).unwrap() {
+                        list.push(parse(i).unwrap())
                     }
                     Type::List(list)
                 },
@@ -585,7 +610,7 @@ pub fn parse(token: Vec<String>) -> Option<Expr> {
     )
 }
 
-pub fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
+pub fn tokenize(input: String) -> Result<Vec<Vec<String>>, GradiaError> {
     let mut tokens: Vec<Vec<String>> = Vec::new();
     let mut current_token = String::new();
     let mut after_colon = String::new();
@@ -612,8 +637,9 @@ pub fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
                 if in_parentheses > 0 {
                     in_parentheses -= 1;
                 } else {
-                    eprintln!("Error! there's duplicate end of the parentheses");
-                    return None;
+                    return Err(GradiaError::Syntax(
+                        "Error! there's duplicate end of the parentheses".to_string(),
+                    ));
                 }
             }
             ' ' | '　' | '\n' | '\t' | '\r' if !in_quote => {
@@ -666,12 +692,14 @@ pub fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
 
     // Syntax error check
     if in_quote {
-        eprintln!("Error! there's not end of the quote");
-        return None;
+        return Err(GradiaError::Syntax(
+            "Error! there's not end of the quote".to_string(),
+        ));
     }
     if in_parentheses != 0 {
-        eprintln!("Error! there's not end of the parentheses");
-        return None;
+        return Err(GradiaError::Syntax(
+            "Error! there's not end of the parentheses".to_string(),
+        ));
     }
 
     if in_parentheses == 0 && !current_token.is_empty() {
@@ -683,7 +711,7 @@ pub fn tokenize(input: String) -> Option<Vec<Vec<String>>> {
             current_token.clear();
         }
     }
-    Some(tokens)
+    Ok(tokens)
 }
 
 #[derive(Clone)]
@@ -693,43 +721,43 @@ pub struct Expr {
 }
 
 impl Expr {
-    pub fn eval(&self, scope: &mut HashMap<String, Type>) -> Option<Type> {
+    pub fn eval(&self, scope: &mut HashMap<String, Type>) -> Result<Type, GradiaError> {
         let result = if let Type::Expr(expr) = &self.expr {
             // Prepare expression
             let expr = {
                 let mut new = vec![];
                 for i in expr {
-                    new.push(i.eval(scope)?)
+                    new.push(i.eval(scope).unwrap())
                 }
                 new
             };
 
-            if let Type::Function(Function::BuiltIn(func)) = expr.get(0)? {
-                func(expr.get(1..)?.to_vec(), scope)?
-            } else if let Type::Function(Function::UserDefined(args, code)) = expr.get(0)? {
+            if let Type::Function(Function::BuiltIn(func)) = expr.get(0).unwrap() {
+                func(expr.get(1..).unwrap().to_vec(), scope).unwrap()
+            } else if let Type::Function(Function::UserDefined(args, code)) = expr.get(0).unwrap() {
                 // Check arguments length
-                if args.len() != expr.get(1..)?.len() {
-                    eprintln!(
+                if args.len() != expr.get(1..).unwrap().len() {
+                    return
+                    Err(GradiaError::Runtime(format!(
                         "Error! the passed arguments length {} is different to expected length {} of the function's arguments",
-                        expr.get(1..)?.len(), args.len()
-                    );
-                    return None;
+                        expr.get(1..).unwrap().len(), args.len()
+                    ))) ;
                 }
 
                 // Setting arguemnt and its value
                 let mut func_scope = scope.clone();
-                for (k, v) in args.iter().zip(expr.get(1..)?.to_vec()) {
+                for (k, v) in args.iter().zip(expr.get(1..).unwrap().to_vec()) {
                     if let Some(annotate) = k.annotate.clone() {
                         // Type check between arguments and expects
                         if annotate.get_type() == v.get_type() {
                             // Setting argument by passed value
                             func_scope.insert(k.expr.get_string(), v);
                         } else {
-                            eprintln!(
+                            return
+                            Err(GradiaError::Runtime(format!(
                                 "Error! the passed argument value `{:?}` is different to expected type `{}` of the function",
                                 v, annotate.get_type()
-                            );
-                            return None;
+                            )));
                         }
                     } else {
                         // Setting argument by passed value
@@ -738,7 +766,7 @@ impl Expr {
                 }
 
                 // Execution of function's code
-                let mut result = None;
+                let mut result = Err(GradiaError::Runtime("Okthing is wrong".to_string()));
                 for line in code {
                     result = Expr {
                         expr: if let Type::List(expr) = line.to_owned() {
@@ -750,7 +778,7 @@ impl Expr {
                     }
                     .eval(&mut func_scope);
                 }
-                result?
+                result.unwrap()
             } else {
                 if expr.len() == 1 {
                     expr[0].clone()
@@ -782,17 +810,16 @@ impl Expr {
         // Type check between result value and except type
         if let Some(annotate) = self.annotate.clone() {
             if &result.get_type() == &annotate.get_type() {
-                Some(result)
+                Ok(result)
             } else {
-                eprintln!(
+                return Err(GradiaError::Runtime(format!(
                     "Error! the result value `{:?}` is different to expected type `{}` ",
                     result,
                     annotate.get_type()
-                );
-                None
+                )));
             }
         } else {
-            Some(result)
+            Ok(result)
         }
     }
 }
@@ -821,7 +848,7 @@ pub enum Type {
 
 #[derive(Clone, Debug)]
 pub enum Function {
-    BuiltIn(fn(Vec<Type>, &mut HashMap<String, Type>) -> Option<Type>),
+    BuiltIn(fn(Vec<Type>, &mut HashMap<String, Type>) -> Result<Type, GradiaError>),
     UserDefined(Vec<Expr>, Vec<Type>),
 }
 

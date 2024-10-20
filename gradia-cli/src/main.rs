@@ -28,10 +28,10 @@ fn main() {
 
     if let Some(path) = args.file {
         if let Ok(code) = read_to_string(path) {
-            if let Some(lines) = tokenize(code) {
+            if let Ok(lines) = tokenize(code) {
                 for line in lines {
-                    if let Some(ast) = parse(line) {
-                        ast.eval(scope);
+                    if let Ok(ast) = parse(line) {
+                        ast.eval(scope).unwrap();
                     }
                 }
             }
@@ -39,10 +39,10 @@ fn main() {
             eprintln!("Error! opening file is fault");
         }
     } else if let Some(code) = args.one_liner {
-        if let Some(lines) = tokenize(code) {
+        if let Ok(lines) = tokenize(code) {
             for line in lines {
-                if let Some(ast) = parse(line) {
-                    ast.eval(scope);
+                if let Ok(ast) = parse(line) {
+                    ast.eval(scope).unwrap();
                 }
             }
         }
@@ -52,11 +52,12 @@ fn main() {
             loop {
                 if let Ok(code) = rl.readline("> ") {
                     rl.add_history_entry(&code).unwrap_or_default();
-                    if let Some(lines) = tokenize(code) {
+                    if let Ok(lines) = tokenize(code) {
                         for line in lines {
-                            if let Some(ast) = parse(line) {
-                                if let Some(result) = ast.eval(scope) {
-                                    println!("{:?}", result);
+                            if let Ok(ast) = parse(line) {
+                                match ast.eval(scope) {
+                                    Ok(result) => println!("{:?}", result),
+                                    Err(err) => println!("{err}"),
                                 }
                             }
                         }
