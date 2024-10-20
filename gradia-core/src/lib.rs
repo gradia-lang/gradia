@@ -245,15 +245,21 @@ pub fn builtin_function() -> HashMap<String, Type> {
             "define".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let value: Type;
-                if let Type::List(args) = params.get(0).unwrap() {
-                    value = Type::Function(Function::UserDefined(
-                        args.get(1..).unwrap().to_vec(),
-                        params.get(1..).unwrap().to_owned(),
-                    ));
-                    scope.insert(args.get(0).unwrap().expr.get_string(), value.clone());
+                if params.len() >= 2 {
+                    if let Type::List(args) = params.get(0).unwrap() {
+                        value = Type::Function(Function::UserDefined(
+                            args.get(1..).unwrap_or_default().to_vec(),
+                            params.get(1..).unwrap_or_default().to_owned(),
+                        ));
+                        scope.insert(args.get(0).unwrap().expr.get_string(), value.clone());
+                    } else {
+                        value = params.get(1).unwrap().to_owned();
+                        scope.insert(params.get(0).unwrap().get_string(), value.clone());
+                    }
                 } else {
-                    value = params.get(1).unwrap().to_owned();
-                    scope.insert(params.get(0).unwrap().get_string(), value.clone());
+                    return Err(GradiaError::Runtime(
+                        "function `define` needs 2 arguments, name and value".to_string(),
+                    ));
                 }
                 Ok(value)
             })),
