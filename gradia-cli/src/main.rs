@@ -1,8 +1,5 @@
 use clap::Parser;
-use crossterm::{
-    execute,
-    terminal::{Clear, ClearType},
-};
+
 use gradia_core::{builtin_function, parse, tokenize, Scope};
 use rustyline::DefaultEditor;
 use std::fs::read_to_string;
@@ -52,32 +49,24 @@ fn main() {
             }
         }
     } else {
-        environment(scope)
-    }
-}
-
-fn environment(scope: &mut Scope) {
-    let mut stdout = io::stdout();
-    execute!(stdout, Clear(ClearType::All)).expect("Failed to clear the screen");
-
-    println!("");
-    println!("Gradia {VERSION}");
-    if let Ok(mut rl) = DefaultEditor::new() {
-        loop {
-            if let Ok(code) = rl.readline("> ") {
-                rl.add_history_entry(&code).unwrap_or_default();
-                match tokenize(code) {
-                    Ok(lines) => {
-                        for line in lines {
-                            if let Ok(ast) = parse(line) {
-                                match ast.eval(scope) {
-                                    Ok(result) => println!("{:?}", result),
-                                    Err(err) => println!("{err}"),
+        println!("Gradia {VERSION}");
+        if let Ok(mut rl) = DefaultEditor::new() {
+            loop {
+                if let Ok(code) = rl.readline("> ") {
+                    rl.add_history_entry(&code).unwrap_or_default();
+                    match tokenize(code) {
+                        Ok(lines) => {
+                            for line in lines {
+                                if let Ok(ast) = parse(line) {
+                                    match ast.eval(scope) {
+                                        Ok(result) => println!("{:?}", result),
+                                        Err(err) => println!("{err}"),
+                                    }
                                 }
                             }
                         }
+                        Err(err) => println!("{err}"),
                     }
-                    Err(err) => println!("{err}"),
                 }
             }
         }
