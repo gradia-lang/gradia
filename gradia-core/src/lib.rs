@@ -6,7 +6,9 @@ use std::{
 };
 use thiserror::Error;
 
-pub fn builtin_function() -> HashMap<String, Type> {
+pub type Scope = HashMap<String, Type>;
+
+pub fn builtin_function() -> Scope {
     HashMap::from([
         (
             "+".to_string(),
@@ -789,7 +791,7 @@ pub struct Expr {
 }
 
 impl Expr {
-    pub fn eval(&self, scope: &mut HashMap<String, Type>) -> Result<Type, GradiaError> {
+    pub fn eval(&self, scope: &mut Scope) -> Result<Type, GradiaError> {
         let result = if let Type::Expr(expr) = &self.expr {
             // Prepare expression
             let expr = {
@@ -929,7 +931,7 @@ pub enum Type {
 
 #[derive(Clone, Debug)]
 pub enum Function {
-    BuiltIn(fn(Vec<Type>, &mut HashMap<String, Type>) -> Result<Type, GradiaError>),
+    BuiltIn(fn(Vec<Type>, &mut Scope) -> Result<Type, GradiaError>),
     UserDefined(Vec<Expr>, Vec<Type>),
 }
 
