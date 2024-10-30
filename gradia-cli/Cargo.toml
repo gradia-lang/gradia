@@ -7,3 +7,5 @@ edition = "2021"
 rustyline = "14.0.0"
 clap = { version = "4.5.17", features = ["derive"] }
 gradia-core = { path = "../gradia-core" }
+crossterm = "0.28.1"
+figlet-rs = "0.1"
