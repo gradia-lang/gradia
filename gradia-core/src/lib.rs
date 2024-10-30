@@ -7,7 +7,6 @@ use std::{
 use thiserror::Error;
 
 pub type Scope = HashMap<String, Type>;
-
 pub fn builtin_function() -> Scope {
     HashMap::from([
         (
