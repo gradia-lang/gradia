@@ -55,11 +55,12 @@ fn main() {
                     match tokenize(code) {
                         Ok(lines) => {
                             for line in lines {
-                                if let Ok(ast) = parse(line) {
-                                    match ast.eval(&mut scope) {
+                                match parse(line) {
+                                    Ok(ast) => match ast.eval(&mut scope) {
                                         Ok(result) => println!("{:?}", result),
                                         Err(err) => println!("{err}"),
-                                    }
+                                    },
+                                    Err(err) => println!("{err}"),
                                 }
                             }
                         }
