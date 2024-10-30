@@ -606,7 +606,12 @@ pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
             "number" => Some(Type::Number(0.0)),
             "bool" => Some(Type::Bool(false)),
             "null" => Some(Type::Null),
-            _ => None,
+            "any" => None,
+            other => {
+                return Err(GradiaError::Syntax(format!(
+                    "unknown type annotation `{other}`"
+                )))
+            }
         }
     } else {
         None
