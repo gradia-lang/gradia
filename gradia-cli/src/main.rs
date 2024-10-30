@@ -1,9 +1,7 @@
 use clap::Parser;
-
 use gradia_core::{builtin_function, parse, tokenize, Scope};
 use rustyline::DefaultEditor;
 use std::fs::read_to_string;
-use std::io;
 
 const VERSION: &str = "0.1.0";
 
@@ -25,7 +23,7 @@ struct Cli {
 }
 
 fn main() {
-    let scope = &mut builtin_function();
+    let mut scope: Scope = builtin_function();
     let args = Cli::parse();
 
     if let Some(path) = args.file {
@@ -33,7 +31,7 @@ fn main() {
             if let Ok(lines) = tokenize(code) {
                 for line in lines {
                     if let Ok(ast) = parse(line) {
-                        ast.eval(scope).unwrap();
+                        ast.eval(&mut scope).unwrap();
                     }
                 }
             }
@@ -44,7 +42,7 @@ fn main() {
         if let Ok(lines) = tokenize(code) {
             for line in lines {
                 if let Ok(ast) = parse(line) {
-                    ast.eval(scope).unwrap();
+                    ast.eval(&mut scope).unwrap();
                 }
             }
         }
@@ -58,7 +56,7 @@ fn main() {
                         Ok(lines) => {
                             for line in lines {
                                 if let Ok(ast) = parse(line) {
-                                    match ast.eval(scope) {
+                                    match ast.eval(&mut scope) {
                                         Ok(result) => println!("{:?}", result),
                                         Err(err) => println!("{err}"),
                                     }
