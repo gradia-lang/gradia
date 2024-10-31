@@ -445,8 +445,7 @@ pub fn builtin_function() -> Scope {
                             ]),
                             annotate: None,
                         }
-                        .eval(scope)
-                        .unwrap_or_default(),
+                        .eval(scope)?,
                         annotate: None,
                     });
                 }
@@ -474,8 +473,7 @@ pub fn builtin_function() -> Scope {
                         ]),
                         annotate: None,
                     })
-                    .eval(scope)
-                    .unwrap_or_default()
+                    .eval(scope)?
                     .get_bool()
                     {
                         result.push(i)
@@ -511,8 +509,7 @@ pub fn builtin_function() -> Scope {
                         ]),
                         annotate: None,
                     }
-                    .eval(&mut scope)
-                    .unwrap_or_default();
+                    .eval(&mut scope)?;
                 }
                 Ok(result.to_owned())
             })),
