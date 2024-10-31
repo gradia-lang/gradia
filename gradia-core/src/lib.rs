@@ -806,12 +806,10 @@ impl Expr {
                 new
             };
 
-            if let Type::Function(Function::BuiltIn(func)) =
-                expr.get(0).cloned().unwrap_or_default()
-            {
-                func(expr.get(1..).unwrap_or_default().to_vec(), scope).unwrap_or_default()
-            } else if let Type::Function(Function::UserDefined(args, code)) =
-                expr.get(0).cloned().unwrap_or_default()
+            if let Some(Type::Function(Function::BuiltIn(func))) = expr.get(0).cloned() {
+                func(expr.get(1..).unwrap_or_default().to_vec(), scope)?
+            } else if let Some(Type::Function(Function::UserDefined(args, code))) =
+                expr.get(0).cloned()
             {
                 // Check arguments length
                 if args.len() != expr.get(1..).unwrap_or_default().len() {
@@ -844,7 +842,7 @@ impl Expr {
                 }
 
                 // Execution of function's code
-                let mut result = Err(GradiaError::Runtime("Okthing is wrong".to_string()));
+                let mut result = Ok(Type::Null);
                 for line in code {
                     result = Expr {
                         expr: if let Type::List(expr) = line.to_owned() {
