@@ -674,6 +674,13 @@ pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
                 },
                 annotate,
             }
+        // Symbol that explicitly
+        } else if token.starts_with("'") {
+            token.remove(0); // Removing outer syntax
+            Expr {
+                expr: Type::Symbol(token),
+                annotate,
+            }
         // Other case will be symbol
         } else {
             Expr {
