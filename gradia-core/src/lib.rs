@@ -842,7 +842,7 @@ impl Expr {
                 }
 
                 // Execution of function's code
-                let mut result = Ok(Type::Null);
+                let mut result = Type::Null;
                 for line in code {
                     result = Expr {
                         expr: if let Type::List(expr) = line.to_owned() {
@@ -852,9 +852,9 @@ impl Expr {
                         },
                         annotate: None,
                     }
-                    .eval(&mut func_scope);
+                    .eval(&mut func_scope)?
                 }
-                result?
+                result
             } else {
                 if expr.len() == 1 {
                     expr[0].clone()
