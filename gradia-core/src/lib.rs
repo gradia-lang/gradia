@@ -801,7 +801,7 @@ impl Expr {
             let expr = {
                 let mut new = vec![];
                 for i in expr {
-                    new.push(i.eval(scope).unwrap_or_default())
+                    new.push(i.eval(scope)?)
                 }
                 new
             };
@@ -854,7 +854,7 @@ impl Expr {
                     }
                     .eval(&mut func_scope);
                 }
-                result.unwrap_or_default()
+                result?
             } else {
                 if expr.len() == 1 {
                     expr[0].clone()
