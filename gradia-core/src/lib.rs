@@ -652,7 +652,7 @@ pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
             Expr {
                 expr: {
                     let mut list = vec![];
-                    for i in tokenize(token).unwrap_or_default() {
+                    for i in tokenize(token)? {
                         list.push(parse(i)?)
                     }
                     Type::Expr(list)
@@ -667,7 +667,7 @@ pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
             Expr {
                 expr: {
                     let mut list = vec![];
-                    for i in tokenize(token).unwrap_or_default() {
+                    for i in tokenize(token)? {
                         list.push(parse(i)?)
                     }
                     Type::List(list)
