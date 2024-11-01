@@ -843,6 +843,7 @@ impl Expr {
                 let mut result = Type::Null;
                 for line in code {
                     result = Expr {
+                        // Convert list to as expression
                         expr: if let Type::List(expr) = line.to_owned() {
                             Type::Expr(expr)
                         } else {
