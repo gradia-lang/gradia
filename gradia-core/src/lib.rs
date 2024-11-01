@@ -414,11 +414,13 @@ pub fn builtin_function() -> Scope {
             "map".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = vec![];
-                let func = if let Type::Function(func) = params.get(1).cloned().unwrap_or_default()
-                {
+                let func = if let Some(Type::Function(func)) = params.get(1).cloned() {
                     func
                 } else {
-                    return Err(GradiaError::Runtime("Something is wrong".to_string()));
+                    return Err(GradiaError::Runtime(format!(
+                        "{:?} is not function",
+                        params.get(1)
+                    )));
                 };
                 for i in params.get(0).cloned().unwrap_or_default().get_list() {
                     result.push(Expr {
