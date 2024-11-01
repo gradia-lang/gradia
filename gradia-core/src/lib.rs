@@ -243,28 +243,15 @@ pub fn builtin_function() -> Scope {
         (
             "eval".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let mut result = Err(GradiaError::Runtime("Something is wrong".to_string()));
+                let mut result = Type::Null;
                 for expr in params {
                     result = Expr {
                         expr: Type::Expr(expr.get_list()),
                         annotate: None,
                     }
-                    .eval(scope);
+                    .eval(scope)?;
                 }
-                result
-            })),
-        ),
-        (
-            "block".to_string(),
-            Type::Function(Function::BuiltIn(|params, _| {
-                let mut result: Vec<Expr> = vec![];
-                for expr in params {
-                    result.push(Expr {
-                        expr,
-                        annotate: None,
-                    });
-                }
-                Ok(Type::List(result))
+                Ok(result)
             })),
         ),
         (
