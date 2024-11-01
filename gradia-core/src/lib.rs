@@ -113,7 +113,7 @@ pub fn builtin_function() -> Scope {
                     match io::stdin().read_line(&mut input) {
                         Ok(_) => input.trim().to_string(),
                         Err(_) => {
-                            return Err(GradiaError::Runtime("Something is wrong".to_string()))
+                            return Err(GradiaError::Runtime("reading line was fault".to_string()))
                         }
                     }
                 }))
@@ -414,12 +414,12 @@ pub fn builtin_function() -> Scope {
             "map".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = vec![];
-                let func = if let Some(Type::Function(func)) = params.get(1).cloned() {
+                let func = if let Some(Type::Function(func)) = params.get(1) {
                     func
                 } else {
                     return Err(GradiaError::Runtime(format!(
                         "{:?} is not function",
-                        params.get(1)
+                        params.get(1).cloned().unwrap_or_default()
                     )));
                 };
                 for i in params.get(0).cloned().unwrap_or_default().get_list() {
@@ -445,11 +445,13 @@ pub fn builtin_function() -> Scope {
             "filter".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = vec![];
-                let func = if let Type::Function(func) = params.get(1).cloned().unwrap_or_default()
-                {
+                let func = if let Some(Type::Function(func)) = params.get(1) {
                     func
                 } else {
-                    return Err(GradiaError::Runtime("Something is wrong".to_string()));
+                    return Err(GradiaError::Runtime(format!(
+                        "{:?} is not function",
+                        params.get(1).cloned().unwrap_or_default()
+                    )));
                 };
                 for i in params.get(0).cloned().unwrap_or_default().get_list() {
                     if (Expr {
@@ -474,11 +476,13 @@ pub fn builtin_function() -> Scope {
         (
             "reduce".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let func = if let Type::Function(func) = params.get(2).cloned().unwrap_or_default()
-                {
+                let func = if let Some(Type::Function(func)) = params.get(2) {
                     func
                 } else {
-                    return Err(GradiaError::Runtime("Something is wrong".to_string()));
+                    return Err(GradiaError::Runtime(format!(
+                        "{:?} is not function",
+                        params.get(1).cloned().unwrap_or_default()
+                    )));
                 };
                 let mut result = params.get(1).cloned().unwrap_or_default().to_owned();
                 let mut scope = scope.clone();
@@ -583,9 +587,7 @@ pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
     // Setting type annotation
     let annotate = if token.len() == 2 {
         match token[1].as_str() {
-            "function" => Some(Type::Function(Function::BuiltIn(|_, _| {
-                Err(GradiaError::Runtime("Something is wrong".to_string()))
-            }))),
+            "function" => Some(Type::Function(Function::BuiltIn(|_, _| Ok(Type::Null)))),
             "list" => Some(Type::List(vec![])),
             "symbol" => Some(Type::Symbol(String::new())),
             "string" => Some(Type::String(String::new())),
