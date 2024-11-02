@@ -24,11 +24,15 @@ pub fn builtin_function() -> Scope {
             "-".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = params.get(0).cloned().unwrap_or_default();
-                for i in params[1..params.len()].to_vec().iter() {
-                    result -= i;
+                if params.len() > 1 {
+                    let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                    for i in params[1..params.len()].to_vec().iter() {
+                        result -= i;
+                    }
+                    Ok(Type::Number(result))
+                } else {
+                    Ok(Type::Number(-params.get(0).cloned().unwrap_or_default()))
                 }
-                Ok(Type::Number(result))
             })),
         ),
         (
