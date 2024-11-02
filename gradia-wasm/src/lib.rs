@@ -34,30 +34,27 @@ impl Gradia {
     }
 
     pub fn run(&mut self, code: String) {
-        if let Ok(lines) = tokenize(code) {
-            for line in lines {
-                if let Ok(ast) = parse(line) {
-                    ast.eval(&mut self.scope).unwrap();
-                }
-            }
-        }
+        self.eval(code);
     }
 
     pub fn eval(&mut self, code: String) -> String {
         let mut result = String::new();
-        if let Ok(lines) = tokenize(code) {
-            for line in lines {
-                match parse(line) {
-                    Ok(ast) => {
-                        result = match ast.eval(&mut self.scope) {
-                            Ok(value) => format!("{:?}", value),
-                            Err(err) => format!("{}", err),
+        match tokenize(code) {
+            Ok(lines) => {
+                for line in lines {
+                    match parse(line) {
+                        Ok(ast) => {
+                            result = match ast.eval(&mut self.scope) {
+                                Ok(value) => format!("{:?}", value),
+                                Err(err) => format!("{}", err),
+                            }
                         }
+                        Err(err) => result = format!("{}", err),
                     }
-                    Err(err) => result = format!("{}", err),
                 }
             }
-        }
+            Err(err) => result = format!("{}", err),
+        };
         result
     }
 
