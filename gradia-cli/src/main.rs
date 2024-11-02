@@ -50,22 +50,25 @@ fn main() {
         println!("Gradia {VERSION}");
         if let Ok(mut rl) = DefaultEditor::new() {
             loop {
-                if let Ok(code) = rl.readline("> ") {
-                    rl.add_history_entry(&code).unwrap_or_default();
-                    match tokenize(code) {
-                        Ok(lines) => {
-                            for line in lines {
-                                match parse(line) {
-                                    Ok(ast) => match ast.eval(&mut scope) {
-                                        Ok(result) => println!("{:?}", result),
+                match rl.readline("> ") {
+                    Ok(code) => {
+                        rl.add_history_entry(&code).unwrap_or_default();
+                        match tokenize(code) {
+                            Ok(lines) => {
+                                for line in lines {
+                                    match parse(line) {
+                                        Ok(ast) => match ast.eval(&mut scope) {
+                                            Ok(result) => println!("{:?}", result),
+                                            Err(err) => println!("{err}"),
+                                        },
                                         Err(err) => println!("{err}"),
-                                    },
-                                    Err(err) => println!("{err}"),
+                                    }
                                 }
                             }
+                            Err(err) => println!("{err}"),
                         }
-                        Err(err) => println!("{err}"),
                     }
+                    Err(err) => println!("{err}"),
                 }
             }
         }
