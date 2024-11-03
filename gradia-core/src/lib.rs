@@ -590,10 +590,10 @@ pub enum GradiaError {
     Syntax(String),
 }
 
-pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
+pub fn parse(token: (String, Option<String>)) -> Result<Expr, GradiaError> {
     // Setting type annotation
-    let annotate = if token.len() == 2 {
-        match token[1].as_str() {
+    let annotate = if let Some(annotate) = token.1 {
+        match annotate.as_str() {
             "function" => Some(Type::Function(Function::BuiltIn(|_, _| Ok(Type::Null)))),
             "list" => Some(Type::List(vec![])),
             "symbol" => Some(Type::Symbol(String::new())),
@@ -612,7 +612,7 @@ pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
         None
     };
 
-    let mut token = token[0].trim().to_string();
+    let mut token = token.0.trim().to_string();
     Ok(
         // Number case
         if let Ok(n) = token.parse::<f64>() {
@@ -686,8 +686,8 @@ pub fn parse(token: Vec<String>) -> Result<Expr, GradiaError> {
     )
 }
 
-pub fn tokenize(input: String) -> Result<Vec<Vec<String>>, GradiaError> {
-    let mut tokens: Vec<Vec<String>> = Vec::new();
+pub fn tokenize(input: String) -> Result<Vec<(String, Option<String>)>, GradiaError> {
+    let mut tokens: Vec<(String, Option<String>)> = Vec::new();
     let mut current_token = String::new();
     let mut after_colon = String::new();
     let mut is_colon = false;
@@ -728,11 +728,11 @@ pub fn tokenize(input: String) -> Result<Vec<Vec<String>>, GradiaError> {
                 } else if !current_token.is_empty() {
                     if is_colon {
                         is_colon = false;
-                        tokens.push(vec![current_token.clone(), after_colon.clone()]);
+                        tokens.push((current_token.clone(), Some(after_colon.clone())));
                         current_token.clear();
                         after_colon.clear();
                     } else {
-                        tokens.push(vec![current_token.clone()]);
+                        tokens.push((current_token.clone(), None));
                         current_token.clear();
                     }
                 }
@@ -780,10 +780,10 @@ pub fn tokenize(input: String) -> Result<Vec<Vec<String>>, GradiaError> {
 
     if in_parentheses == 0 && !current_token.is_empty() {
         if is_colon {
-            tokens.push(vec![current_token.clone(), after_colon]);
+            tokens.push((current_token.clone(), Some(after_colon.clone())));
             current_token.clear();
         } else {
-            tokens.push(vec![current_token.clone()]);
+            tokens.push((current_token.clone(), None));
             current_token.clear();
         }
     }
