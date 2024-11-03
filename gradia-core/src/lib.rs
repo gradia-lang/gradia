@@ -819,7 +819,7 @@ impl Expr {
                     Err(GradiaError::Runtime(format!(
                         "the passed arguments length {} is different to expected length {} of the function's arguments",
                         expr.get(1..).unwrap_or_default().len(), args.len()
-                    ))) ;
+                    )));
                 }
 
                 // Setting arguemnt and its value
