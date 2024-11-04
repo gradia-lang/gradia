@@ -483,7 +483,7 @@ pub fn builtin_function() -> Scope {
         (
             "reduce".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let func = if let Some(Type::Function(func)) = params.get(2) {
+                let func = if let Some(Type::Function(func)) = params.get(1) {
                     func
                 } else {
                     return Err(GradiaError::Runtime(format!(
@@ -491,17 +491,18 @@ pub fn builtin_function() -> Scope {
                         params.get(1).cloned().unwrap_or_default()
                     )));
                 };
-                let mut result = params.get(1).cloned().unwrap_or_default().to_owned();
+                let list = params.get(0).cloned().unwrap_or_default().get_list();
+                let mut result = list.get(0).cloned().unwrap_or_default().to_owned().expr;
                 let mut scope = scope.clone();
 
-                for i in params.get(0).cloned().unwrap_or_default().get_list() {
+                for i in list.get(1..).unwrap_or_default() {
                     result = Expr {
                         expr: Type::Expr(vec![
                             Expr {
                                 expr: Type::Function(func.to_owned()),
                                 annotate: None,
                             },
-                            i,
+                            i.clone(),
                             Expr {
                                 expr: result,
                                 annotate: None,
@@ -509,7 +510,7 @@ pub fn builtin_function() -> Scope {
                         ]),
                         annotate: None,
                     }
-                    .eval(&mut scope)?;
+                    .eval(&mut scope)?
                 }
                 Ok(result.to_owned())
             })),
