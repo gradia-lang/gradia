@@ -516,6 +516,14 @@ pub fn builtin_function() -> Scope {
             })),
         ),
         (
+            "reverse".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                let mut list = params.get(0).cloned().unwrap_or_default().get_list();
+                list.reverse();
+                Ok(Type::List(list))
+            })),
+        ),
+        (
             "len".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 Ok(Type::Number(
