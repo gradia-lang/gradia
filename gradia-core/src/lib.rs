@@ -502,11 +502,11 @@ pub fn builtin_function() -> Scope {
                                 expr: Type::Function(func.to_owned()),
                                 annotate: None,
                             },
-                            i.clone(),
                             Expr {
                                 expr: result,
                                 annotate: None,
                             },
+                            i.clone(),
                         ]),
                         annotate: None,
                     }
