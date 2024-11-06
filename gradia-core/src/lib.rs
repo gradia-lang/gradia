@@ -425,7 +425,7 @@ pub fn builtin_function() -> Scope {
                     func
                 } else {
                     return Err(GradiaError::Runtime(format!(
-                        "{:?} is not function",
+                        "`{:?}` is not function",
                         params.get(1).cloned().unwrap_or_default()
                     )));
                 };
@@ -456,7 +456,7 @@ pub fn builtin_function() -> Scope {
                     func
                 } else {
                     return Err(GradiaError::Runtime(format!(
-                        "{:?} is not function",
+                        "`{:?}` is not function",
                         params.get(1).cloned().unwrap_or_default()
                     )));
                 };
@@ -487,7 +487,7 @@ pub fn builtin_function() -> Scope {
                     func
                 } else {
                     return Err(GradiaError::Runtime(format!(
-                        "{:?} is not function",
+                        "`{:?}` is not function",
                         params.get(1).cloned().unwrap_or_default()
                     )));
                 };
