@@ -953,7 +953,7 @@ impl Type {
     pub fn get_number(&self) -> f64 {
         match &self {
             Type::Number(n) => n.to_owned(),
-            Type::String(s) => s.trim().parse().unwrap_or(0.0),
+            Type::String(s) | Type::Symbol(s) => s.trim().parse().unwrap_or(0.0),
             Type::Bool(b) => {
                 if *b {
                     1.0
@@ -961,9 +961,10 @@ impl Type {
                     0.0
                 }
             }
-            Type::Expr(x) | Type::List(x) => x.len() as f64,
+            Type::Expr(x) | Type::List(x) => {
+                x.get(0).cloned().unwrap_or_default().expr.get_number()
+            }
             Type::Function(_) | Type::Null => 0.0,
-            Type::Symbol(v) => v.len() as f64,
         }
     }
 
