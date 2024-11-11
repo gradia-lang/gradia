@@ -421,20 +421,13 @@ pub fn builtin_function() -> Scope {
             "map".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = vec![];
-                let func = if let Some(Type::Function(func)) = params.get(1) {
-                    func
-                } else {
-                    return Err(GradiaError::Runtime(format!(
-                        "`{:?}` is not function",
-                        params.get(1).cloned().unwrap_or_default()
-                    )));
-                };
+                let func = params.get(1).cloned().unwrap_or_default();
                 for i in params.get(0).cloned().unwrap_or_default().get_list() {
                     result.push(Expr {
                         expr: Expr {
                             expr: Type::Expr(vec![
                                 Expr {
-                                    expr: Type::Function(func.to_owned()),
+                                    expr: func.clone(),
                                     annotate: None,
                                 },
                                 i,
@@ -452,19 +445,12 @@ pub fn builtin_function() -> Scope {
             "filter".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 let mut result = vec![];
-                let func = if let Some(Type::Function(func)) = params.get(1) {
-                    func
-                } else {
-                    return Err(GradiaError::Runtime(format!(
-                        "`{:?}` is not function",
-                        params.get(1).cloned().unwrap_or_default()
-                    )));
-                };
+                let func = params.get(1).cloned().unwrap_or_default();
                 for i in params.get(0).cloned().unwrap_or_default().get_list() {
                     if (Expr {
                         expr: Type::Expr(vec![
                             Expr {
-                                expr: Type::Function(func.to_owned()),
+                                expr: func.to_owned(),
                                 annotate: None,
                             },
                             i.clone(),
@@ -483,14 +469,7 @@ pub fn builtin_function() -> Scope {
         (
             "reduce".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                let func = if let Some(Type::Function(func)) = params.get(1) {
-                    func
-                } else {
-                    return Err(GradiaError::Runtime(format!(
-                        "`{:?}` is not function",
-                        params.get(1).cloned().unwrap_or_default()
-                    )));
-                };
+                let func = params.get(1).cloned().unwrap_or_default();
                 let list = params.get(0).cloned().unwrap_or_default().get_list();
                 let mut result = list.get(0).cloned().unwrap_or_default().to_owned().expr;
                 let mut scope = scope.clone();
@@ -499,7 +478,7 @@ pub fn builtin_function() -> Scope {
                     result = Expr {
                         expr: Type::Expr(vec![
                             Expr {
-                                expr: Type::Function(func.to_owned()),
+                                expr: func.clone(),
                                 annotate: None,
                             },
                             Expr {
