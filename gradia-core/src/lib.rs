@@ -226,13 +226,13 @@ pub fn builtin_function() -> Scope {
                         "list" => Ok(Type::List(
                             params.get(0).cloned().unwrap_or_default().get_list(),
                         )),
-                        _ => Ok(params.get(0).cloned().unwrap_or_default().clone()),
+                        other => Err(GradiaError::Runtime(format!("unknown type name `{other}`"))),
                     }
                 } else {
-                    return Err(GradiaError::Runtime(
+                    Err(GradiaError::Runtime(
                         "function `cast` needs 2 arguments, value and type name to cast"
                             .to_string(),
-                    ));
+                    ))
                 }
             })),
         ),
