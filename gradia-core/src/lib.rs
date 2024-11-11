@@ -868,18 +868,10 @@ impl Expr {
                 }
                 result
             } else {
-                if expr.len() == 1 {
-                    expr[0].clone()
-                } else {
-                    Type::List(
-                        expr.iter()
-                            .map(|i| Expr {
-                                expr: i.to_owned(),
-                                annotate: None,
-                            })
-                            .collect(),
-                    )
-                }
+                return Err(GradiaError::Runtime(format!(
+                    "first atom in expression needs function, but provided `{:?}` is not function",
+                    expr.get(0).cloned().unwrap_or_default()
+                )));
             }
         } else {
             let expr = self.expr.clone();
@@ -1050,7 +1042,7 @@ impl Debug for Type {
             ),
             Type::Null => "null".to_string(),
         };
-        write!(f, "{fmt}",)
+        write!(f, "{fmt}")
     }
 }
 
