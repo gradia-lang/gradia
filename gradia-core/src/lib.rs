@@ -869,7 +869,7 @@ impl Expr {
                 result
             } else {
                 return Err(GradiaError::Runtime(format!(
-                    "first atom in expression needs function, but provided `{:?}` is not function",
+                    "first atom in expression should be function, but provided `{:?}` is not function",
                     expr.get(0).cloned().unwrap_or_default()
                 )));
             }
