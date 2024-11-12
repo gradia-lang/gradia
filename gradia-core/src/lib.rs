@@ -14,7 +14,7 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
                     let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                    let mut result: f64 = params[0];
                     for i in params[1..params.len()].to_vec().iter() {
                         result += i;
                     }
@@ -30,13 +30,13 @@ pub fn builtin_function() -> Scope {
                 if params.len() >= 1 {
                     let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
                     if params.len() >= 2 {
-                        let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                        let mut result: f64 = params[0];
                         for i in params[1..params.len()].to_vec().iter() {
                             result -= i;
                         }
                         Ok(Type::Number(result))
                     } else {
-                        Ok(Type::Number(-params.get(0).cloned().unwrap_or_default()))
+                        Ok(Type::Number(-params[0]))
                     }
                 } else {
                     Err(GradiaError::Function(params.len(), 2))
@@ -48,7 +48,7 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
                     let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                    let mut result: f64 = params[0];
                     for i in params[1..params.len()].to_vec().iter() {
                         result *= i;
                     }
@@ -63,7 +63,7 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
                     let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                    let mut result: f64 = params[0];
                     for i in params[1..params.len()].to_vec().iter() {
                         result /= i;
                     }
