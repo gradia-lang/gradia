@@ -12,71 +12,95 @@ pub fn builtin_function() -> Scope {
         (
             "+".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = params.get(0).cloned().unwrap_or_default();
-                for i in params[1..params.len()].to_vec().iter() {
-                    result += i;
+                if params.len() >= 1 {
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                    for i in params[1..params.len()].to_vec().iter() {
+                        result += i;
+                    }
+                    Ok(Type::Number(result))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
                 }
-                Ok(Type::Number(result))
             })),
         ),
         (
             "-".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                if params.len() > 1 {
-                    let mut result: f64 = params.get(0).cloned().unwrap_or_default();
-                    for i in params[1..params.len()].to_vec().iter() {
-                        result -= i;
+                if params.len() >= 1 {
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    if params.len() >= 2 {
+                        let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                        for i in params[1..params.len()].to_vec().iter() {
+                            result -= i;
+                        }
+                        Ok(Type::Number(result))
+                    } else {
+                        Ok(Type::Number(-params.get(0).cloned().unwrap_or_default()))
                     }
-                    Ok(Type::Number(result))
                 } else {
-                    Ok(Type::Number(-params.get(0).cloned().unwrap_or_default()))
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
         (
             "*".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = params.get(0).cloned().unwrap_or_default();
-                for i in params[1..params.len()].to_vec().iter() {
-                    result *= i;
+                if params.len() >= 1 {
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                    for i in params[1..params.len()].to_vec().iter() {
+                        result *= i;
+                    }
+                    Ok(Type::Number(result))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
                 }
-                Ok(Type::Number(result))
             })),
         ),
         (
             "/".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = params.get(0).cloned().unwrap_or_default();
-                for i in params[1..params.len()].to_vec().iter() {
-                    result /= i;
+                if params.len() >= 1 {
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    let mut result: f64 = params.get(0).cloned().unwrap_or_default();
+                    for i in params[1..params.len()].to_vec().iter() {
+                        result /= i;
+                    }
+                    Ok(Type::Number(result))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
                 }
-                Ok(Type::Number(result))
             })),
         ),
         (
             "%".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = params.get(0).cloned().unwrap_or_default();
-                for i in params[1..params.len()].to_vec().iter() {
-                    result %= i;
+                if params.len() >= 1 {
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    let mut result: f64 = params[0];
+                    for i in params[1..params.len()].to_vec().iter() {
+                        result %= i;
+                    }
+                    Ok(Type::Number(result))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
                 }
-                Ok(Type::Number(result))
             })),
         ),
         (
             "^".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                let mut result: f64 = params.get(0).cloned().unwrap_or_default();
-                for i in params[1..params.len()].to_vec().iter() {
-                    result = result.powf(i.to_owned());
+                if params.len() >= 1 {
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    let mut result: f64 = params[0];
+                    for i in params[1..params.len()].to_vec().iter() {
+                        result = result.powf(i.to_owned());
+                    }
+                    Ok(Type::Number(result))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
                 }
-                Ok(Type::Number(result))
             })),
         ),
         (
@@ -108,99 +132,139 @@ pub fn builtin_function() -> Scope {
         (
             "input".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::String({
-                    let mut input = String::new();
-                    if let Some(prompt) = params.get(0) {
-                        print!("{}", prompt.get_string());
-                    }
-                    io::stdout().flush().unwrap_or_default();
-                    match io::stdin().read_line(&mut input) {
-                        Ok(_) => input.trim().to_string(),
-                        Err(_) => {
-                            return Err(GradiaError::Runtime("reading line was fault".to_string()))
+                if params.len() <= 1 {
+                    Ok(Type::String({
+                        let mut input = String::new();
+                        if let Some(prompt) = params.get(0) {
+                            print!("{}", prompt.get_string());
                         }
-                    }
-                }))
+                        io::stdout().flush().unwrap_or_default();
+                        match io::stdin().read_line(&mut input) {
+                            Ok(_) => input.trim().to_string(),
+                            Err(_) => {
+                                return Err(GradiaError::Runtime(
+                                    "reading line was fault".to_string(),
+                                ))
+                            }
+                        }
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 1))
+                }
             })),
         ),
         (
             "=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool({
-                    let params: Vec<String> = params.iter().map(|i| format!("{i:?}")).collect();
-                    params.windows(2).all(|window| window[0] == window[1])
-                }))
+                if params.len() >= 2 {
+                    Ok(Type::Bool({
+                        let params: Vec<String> = params.iter().map(|i| format!("{i:?}")).collect();
+                        params.windows(2).all(|window| window[0] == window[1])
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
             })),
         ),
         (
             "!=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool({
-                    let params: Vec<String> = params.iter().map(|i| format!("{i:?}")).collect();
-                    params.windows(2).all(|window| window[0] != window[1])
-                }))
+                if params.len() >= 2 {
+                    Ok(Type::Bool({
+                        let params: Vec<String> = params.iter().map(|i| format!("{i:?}")).collect();
+                        params.windows(2).all(|window| window[0] != window[1])
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
             })),
         ),
         (
             ">".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool({
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    params.windows(2).all(|window| window[0] > window[1])
-                }))
+                if params.len() >= 2 {
+                    Ok(Type::Bool({
+                        let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                        params.windows(2).all(|window| window[0] > window[1])
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
             })),
         ),
         (
             ">=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool({
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    params.windows(2).all(|window| window[0] >= window[1])
-                }))
+                if params.len() >= 2 {
+                    Ok(Type::Bool({
+                        let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                        params.windows(2).all(|window| window[0] >= window[1])
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
             })),
         ),
         (
             "<".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool({
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    params.windows(2).all(|window| window[0] < window[1])
-                }))
+                if params.len() >= 2 {
+                    Ok(Type::Bool({
+                        let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                        params.windows(2).all(|window| window[0] < window[1])
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
             })),
         ),
         (
             "<=".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool({
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    params.windows(2).all(|window| window[0] < window[1])
-                }))
+                if params.len() >= 2 {
+                    Ok(Type::Bool({
+                        let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                        params.windows(2).all(|window| window[0] < window[1])
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
             })),
         ),
         (
             "&".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool({
-                    let params: Vec<bool> = params.iter().map(|i| i.get_bool()).collect();
-                    params.iter().all(|x| *x)
-                }))
+                if params.len() >= 2 {
+                    Ok(Type::Bool({
+                        let params: Vec<bool> = params.iter().map(|i| i.get_bool()).collect();
+                        params.iter().all(|x| *x)
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
             })),
         ),
         (
             "|".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool({
-                    let params: Vec<bool> = params.iter().map(|i| i.get_bool()).collect();
-                    params.iter().any(|x| *x)
-                }))
+                if params.len() >= 2 {
+                    Ok(Type::Bool({
+                        let params: Vec<bool> = params.iter().map(|i| i.get_bool()).collect();
+                        params.iter().any(|x| *x)
+                    }))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
             })),
         ),
         (
             "!".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Bool(
-                    !params.get(0).cloned().unwrap_or_default().get_bool(),
-                ))
+                if params.len() == 1 {
+                    Ok(Type::Bool(!params[0].get_bool()))
+                } else {
+                    Err(GradiaError::Function(params.len(), 1))
+                }
             })),
         ),
         (
@@ -229,19 +293,20 @@ pub fn builtin_function() -> Scope {
                         other => Err(GradiaError::Runtime(format!("unknown type name `{other}`"))),
                     }
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `cast` needs 2 arguments, value and type name to cast"
-                            .to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
         (
             "type".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::String(
-                    params.get(0).cloned().unwrap_or_default().get_type(),
-                ))
+                if params.len() == 1 {
+                    Ok(Type::String(
+                        params.get(0).cloned().unwrap_or_default().get_type(),
+                    ))
+                } else {
+                    Err(GradiaError::Function(params.len(), 1))
+                }
             })),
         ),
         (
@@ -280,9 +345,7 @@ pub fn builtin_function() -> Scope {
                         );
                     }
                 } else {
-                    return Err(GradiaError::Runtime(
-                        "function `define` needs 2 arguments, name and value".to_string(),
-                    ));
+                    return Err(GradiaError::Function(params.len(), 2));
                 }
                 Ok(value)
             })),
@@ -290,90 +353,75 @@ pub fn builtin_function() -> Scope {
         (
             "lambda".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(Type::Function(Function::UserDefined(
-                    params.get(0).cloned().unwrap_or_default().get_list(),
-                    params.get(1..).unwrap_or_default().to_vec(),
-                )))
-            })),
-        ),
-        (
-            "if-else".to_string(),
-            Type::Function(Function::BuiltIn(|params, scope| {
-                if params.get(0).cloned().unwrap_or_default().get_bool() {
-                    Expr {
-                        expr: Type::Expr(
-                            params
-                                .get(1)
-                                .cloned()
-                                .unwrap_or_default()
-                                .clone()
-                                .get_list(),
-                        ),
-                        annotate: None,
-                    }
-                    .eval(scope)
+                if params.len() >= 2 {
+                    Ok(Type::Function(Function::UserDefined(
+                        params[0].get_list(),
+                        params[1..].to_vec(),
+                    )))
                 } else {
-                    Expr {
-                        expr: Type::Expr(
-                            params
-                                .get(2)
-                                .cloned()
-                                .unwrap_or_default()
-                                .clone()
-                                .get_list(),
-                        ),
-                        annotate: None,
-                    }
-                    .eval(scope)
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
         (
-            "when".to_string(),
+            "if".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                if params.get(0).cloned().unwrap_or_default().get_bool() {
-                    Expr {
-                        expr: Type::Expr(
-                            params
-                                .get(1)
-                                .cloned()
-                                .unwrap_or_default()
-                                .clone()
-                                .get_list(),
-                        ),
-                        annotate: None,
+                if params.len() == 3 {
+                    if params[0].get_bool() {
+                        Expr {
+                            expr: Type::Expr(params[1].get_list()),
+                            annotate: None,
+                        }
+                        .eval(scope)
+                    } else {
+                        Expr {
+                            expr: Type::Expr(params[2].get_list()),
+                            annotate: None,
+                        }
+                        .eval(scope)
                     }
-                    .eval(scope)
+                } else if params.len() == 2 {
+                    if params[0].get_bool() {
+                        Expr {
+                            expr: Type::Expr(params[1].get_list()),
+                            annotate: None,
+                        }
+                        .eval(scope)
+                    } else {
+                        Ok(Type::Null)
+                    }
                 } else {
-                    Ok(Type::Null)
+                    Err(GradiaError::Function(params.len(), 3))
                 }
             })),
         ),
         (
             "car".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                Ok(params
-                    .get(0)
-                    .cloned()
-                    .unwrap_or_default()
-                    .get_list()
-                    .get(0)
-                    .cloned()
-                    .unwrap_or_default()
-                    .expr
-                    .clone())
+                if params.len() == 1 {
+                    Ok(params[0]
+                        .get_list()
+                        .get(0)
+                        .cloned()
+                        .unwrap_or_default()
+                        .expr
+                        .clone())
+                } else {
+                    Err(GradiaError::Function(params.len(), 1))
+                }
             })),
         ),
         (
             "cdr".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                let list = params.get(0).cloned().unwrap_or_default();
-                Ok(Type::List(
-                    list.get_list()
-                        .get(1..list.get_list().len())
-                        .unwrap_or_default()
-                        .to_vec(),
-                ))
+                if params.len() == 1 {
+                    let list = params[0].get_list();
+                    Ok(Type::List(
+                        list.get(1..list.len()).unwrap_or_default().to_vec(),
+                    ))
+                } else {
+                    Err(GradiaError::Function(params.len(), 1))
+                }
             })),
         ),
         (
@@ -401,7 +449,7 @@ pub fn builtin_function() -> Scope {
                         current += 1.0;
                     }
                     Ok(Type::List(range))
-                } else if params.len() >= 3 {
+                } else if params.len() == 3 {
                     let mut range: Vec<Expr> = vec![];
                     let mut current: f64 = params[0].get_number();
                     while current < params[1].get_number() {
@@ -413,16 +461,14 @@ pub fn builtin_function() -> Scope {
                     }
                     Ok(Type::List(range))
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `range` needs 1 ~ 3 arguments: start, end and step".to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 3))
                 }
             })),
         ),
         (
             "map".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                if params.len() >= 2 {
+                if params.len() == 2 {
                     let mut result = vec![];
                     let func = params[1].clone();
                     for i in params[0].get_list() {
@@ -443,16 +489,14 @@ pub fn builtin_function() -> Scope {
                     }
                     Ok(Type::List(result))
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `map` needs 2 arguments: list and function object".to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
         (
             "filter".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                if params.len() >= 2 {
+                if params.len() == 2 {
                     let mut result = vec![];
                     let func = params[1].clone();
                     for i in params[0].get_list() {
@@ -474,16 +518,14 @@ pub fn builtin_function() -> Scope {
                     }
                     Ok(Type::List(result))
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `filter` needs 2 arguments: list and function object".to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
         (
             "reduce".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
-                if params.len() >= 2 {
+                if params.len() == 2 {
                     let func = params[1].clone();
                     let list = params[0].get_list();
                     let mut result = if let Some(first) = list.get(0) {
@@ -512,59 +554,50 @@ pub fn builtin_function() -> Scope {
                     }
                     Ok(result.to_owned())
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `reduce` needs 2 arguments: list and function object".to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
         (
             "reverse".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                if params.len() >= 1 {
+                if params.len() == 1 {
                     let mut list = params[0].get_list();
                     list.reverse();
                     Ok(Type::List(list))
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `reverse` needs 1 arguments: a list to reverse".to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 1))
                 }
             })),
         ),
         (
             "len".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                if params.len() >= 1 {
+                if params.len() == 1 {
                     Ok(Type::Number(params[0].get_list().len() as f64))
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `len` needs 1 arguments: a list to be measured".to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 1))
                 }
             })),
         ),
         (
             "repeat".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                if params.len() >= 2 {
+                if params.len() == 2 {
                     Ok(Type::String(
                         params[0]
                             .get_string()
                             .repeat(params[1].get_number() as usize),
                     ))
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `repeat` needs 2 arguments: string and number to repeat"
-                            .to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
         (
             "join".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                if params.len() >= 2 {
+                if params.len() == 2 {
                     Ok(Type::String(
                         params[0]
                             .get_list()
@@ -574,16 +607,14 @@ pub fn builtin_function() -> Scope {
                             .join(&params[1].get_string()),
                     ))
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `join` needs 2 arguments: list and key string".to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
         (
             "split".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                if params.len() >= 2 {
+                if params.len() == 2 {
                     Ok(Type::List(
                         params[0]
                             .get_string()
@@ -595,9 +626,7 @@ pub fn builtin_function() -> Scope {
                             .collect::<Vec<Expr>>(),
                     ))
                 } else {
-                    Err(GradiaError::Runtime(
-                        "function `split` needs 2 arguments: string and delimiter".to_string(),
-                    ))
+                    Err(GradiaError::Function(params.len(), 2))
                 }
             })),
         ),
@@ -617,6 +646,9 @@ pub fn builtin_function() -> Scope {
 pub enum GradiaError {
     #[error("Runtime Error! {0}")]
     Runtime(String),
+
+    #[error("Runtime Error! the passed arguments length {0} is different to expected length {1} of the function's arguments")]
+    Function(usize, usize),
 
     #[error("Syntax Error! {0}")]
     Syntax(String),
