@@ -368,25 +368,37 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, scope| {
                 if params.len() == 3 {
                     if params[0].get_bool() {
-                        Expr {
-                            expr: Type::Expr(params[1].get_list()),
-                            annotate: None,
+                        if let Type::List(expr) = params[1].clone() {
+                            Expr {
+                                expr: Type::Expr(expr),
+                                annotate: None,
+                            }
+                            .eval(scope)
+                        } else {
+                            Ok(params[1].clone())
                         }
-                        .eval(scope)
                     } else {
-                        Expr {
-                            expr: Type::Expr(params[2].get_list()),
-                            annotate: None,
+                        if let Type::List(expr) = params[2].clone() {
+                            Expr {
+                                expr: Type::Expr(expr),
+                                annotate: None,
+                            }
+                            .eval(scope)
+                        } else {
+                            Ok(params[2].clone())
                         }
-                        .eval(scope)
                     }
                 } else if params.len() == 2 {
                     if params[0].get_bool() {
-                        Expr {
-                            expr: Type::Expr(params[1].get_list()),
-                            annotate: None,
+                        if let Type::List(expr) = params[1].clone() {
+                            Expr {
+                                expr: Type::Expr(expr),
+                                annotate: None,
+                            }
+                            .eval(scope)
+                        } else {
+                            Ok(params[1].clone())
                         }
-                        .eval(scope)
                     } else {
                         Ok(Type::Null)
                     }
