@@ -659,8 +659,11 @@ pub enum GradiaError {
     #[error("Runtime Error! {0}")]
     Runtime(String),
 
-    #[error("Runtime Error! the passed arguments length {0} is different to expected length {1} of the function's arguments")]
+    #[error("Function Error! the passed arguments length {0} is different to expected length {1} of the function's arguments")]
     Function(usize, usize),
+
+    #[error("Type Error! the result value `{0:?}` is different to expected type `{1}`")]
+    Type(Type, String),
 
     #[error("Syntax Error! {0}")]
     Syntax(String),
@@ -891,11 +894,10 @@ impl Expr {
             {
                 // Check arguments length
                 if args.len() != expr.get(1..).unwrap_or_default().len() {
-                    return
-                    Err(GradiaError::Runtime(format!(
-                        "the passed arguments length {} is different to expected length {} of the function's arguments",
-                        expr.get(1..).unwrap_or_default().len(), args.len()
-                    )));
+                    return Err(GradiaError::Function(
+                        expr.get(1..).unwrap_or_default().len(),
+                        args.len(),
+                    ));
                 }
 
                 // Setting arguemnt and its value
@@ -907,11 +909,7 @@ impl Expr {
                             // Setting argument by passed value
                             func_scope.insert(k.expr.get_string(), v);
                         } else {
-                            return
-                            Err(GradiaError::Runtime(format!(
-                                "the passed argument value `{:?}` is different to expected type `{}` of the function",
-                                v, annotate.get_type()
-                            )));
+                            return Err(GradiaError::Type(v, annotate.get_type()));
                         }
                     } else {
                         // Setting argument by passed value
@@ -935,7 +933,7 @@ impl Expr {
                 }
                 result
             } else {
-                return Err(GradiaError::Runtime(format!(
+                return Err(GradiaError::Syntax(format!(
                     "first atom in expression should be function, but provided `{:?}` is not function",
                     expr.get(0).cloned().unwrap_or_default()
                 )));
@@ -959,11 +957,7 @@ impl Expr {
             if &result.get_type() == &annotate.get_type() {
                 Ok(result)
             } else {
-                return Err(GradiaError::Runtime(format!(
-                    "the result value `{:?}` is different to expected type `{}`",
-                    result,
-                    annotate.get_type()
-                )));
+                return Err(GradiaError::Type(result, annotate.get_type()));
             }
         } else {
             Ok(result)
