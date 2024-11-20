@@ -1231,7 +1231,7 @@ impl Fraction {
 
     // Function to convert the fraction to a floating-point number
     fn to_f64(&self) -> f64 {
-        (self.numerator / self.denominator) as f64
+        self.numerator as f64 / self.denominator as f64
     }
 }
 
