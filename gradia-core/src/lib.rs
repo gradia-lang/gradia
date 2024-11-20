@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     fmt::{self, Debug},
     io::{self, Write},
+    ops::{Add, Div, Mul, Sub},
     process::exit,
 };
 use thiserror::Error;
@@ -13,10 +14,10 @@ pub fn builtin_function() -> Scope {
             "+".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    let mut result: f64 = params[0];
+                    let params: Vec<Fraction> = params.iter().map(|i| i.get_number()).collect();
+                    let mut result: Fraction = params[0];
                     for i in params[1..params.len()].to_vec().iter() {
-                        result += i;
+                        result = result + i.clone();
                     }
                     Ok(Type::Number(result))
                 } else {
@@ -28,15 +29,15 @@ pub fn builtin_function() -> Scope {
             "-".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    let params: Vec<Fraction> = params.iter().map(|i| i.get_number()).collect();
                     if params.len() >= 2 {
-                        let mut result: f64 = params[0];
+                        let mut result: Fraction = params[0];
                         for i in params[1..params.len()].to_vec().iter() {
-                            result -= i;
+                            result = result - i.clone();
                         }
                         Ok(Type::Number(result))
                     } else {
-                        Ok(Type::Number(-params[0]))
+                        Ok(Type::Number(Fraction::new(0.0) - params[0]))
                     }
                 } else {
                     Err(GradiaError::Function(params.len(), 2))
@@ -47,10 +48,10 @@ pub fn builtin_function() -> Scope {
             "*".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    let mut result: f64 = params[0];
+                    let params: Vec<Fraction> = params.iter().map(|i| i.get_number()).collect();
+                    let mut result: Fraction = params[0];
                     for i in params[1..params.len()].to_vec().iter() {
-                        result *= i;
+                        result = result * i.clone();
                     }
                     Ok(Type::Number(result))
                 } else {
@@ -62,10 +63,10 @@ pub fn builtin_function() -> Scope {
             "/".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
-                    let mut result: f64 = params[0];
+                    let params: Vec<Fraction> = params.iter().map(|i| i.get_number()).collect();
+                    let mut result: Fraction = params[0];
                     for i in params[1..params.len()].to_vec().iter() {
-                        result /= i;
+                        result = result / i.clone();
                     }
                     Ok(Type::Number(result))
                 } else {
@@ -77,12 +78,12 @@ pub fn builtin_function() -> Scope {
             "%".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number().to_f64()).collect();
                     let mut result: f64 = params[0];
                     for i in params[1..params.len()].to_vec().iter() {
                         result %= i;
                     }
-                    Ok(Type::Number(result))
+                    Ok(Type::Number(Fraction::new(result)))
                 } else {
                     Err(GradiaError::Function(params.len(), 2))
                 }
@@ -92,12 +93,12 @@ pub fn builtin_function() -> Scope {
             "^".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 1 {
-                    let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                    let params: Vec<f64> = params.iter().map(|i| i.get_number().to_f64()).collect();
                     let mut result: f64 = params[0];
                     for i in params[1..params.len()].to_vec().iter() {
                         result = result.powf(i.to_owned());
                     }
-                    Ok(Type::Number(result))
+                    Ok(Type::Number(Fraction::new(result)))
                 } else {
                     Err(GradiaError::Function(params.len(), 2))
                 }
@@ -184,7 +185,8 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 2 {
                     Ok(Type::Bool({
-                        let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                        let params: Vec<f64> =
+                            params.iter().map(|i| i.get_number().to_f64()).collect();
                         params.windows(2).all(|window| window[0] > window[1])
                     }))
                 } else {
@@ -197,7 +199,8 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 2 {
                     Ok(Type::Bool({
-                        let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                        let params: Vec<f64> =
+                            params.iter().map(|i| i.get_number().to_f64()).collect();
                         params.windows(2).all(|window| window[0] >= window[1])
                     }))
                 } else {
@@ -210,7 +213,8 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 2 {
                     Ok(Type::Bool({
-                        let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                        let params: Vec<f64> =
+                            params.iter().map(|i| i.get_number().to_f64()).collect();
                         params.windows(2).all(|window| window[0] < window[1])
                     }))
                 } else {
@@ -223,7 +227,8 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() >= 2 {
                     Ok(Type::Bool({
-                        let params: Vec<f64> = params.iter().map(|i| i.get_number()).collect();
+                        let params: Vec<f64> =
+                            params.iter().map(|i| i.get_number().to_f64()).collect();
                         params.windows(2).all(|window| window[0] < window[1])
                     }))
                 } else {
@@ -442,9 +447,9 @@ pub fn builtin_function() -> Scope {
                 if params.len() == 1 {
                     let mut range: Vec<Expr> = vec![];
                     let mut current: f64 = 0.0;
-                    while current < params[0].get_number() {
+                    while current < params[0].get_number().to_f64() {
                         range.push(Expr {
-                            expr: Type::Number(current),
+                            expr: Type::Number(Fraction::new(current)),
                             annotate: None,
                         });
                         current += 1.0;
@@ -452,10 +457,10 @@ pub fn builtin_function() -> Scope {
                     Ok(Type::List(range))
                 } else if params.len() == 2 {
                     let mut range: Vec<Expr> = vec![];
-                    let mut current: f64 = params[0].get_number();
-                    while current < params[1].get_number() {
+                    let mut current: f64 = params[0].get_number().to_f64();
+                    while current < params[1].get_number().to_f64() {
                         range.push(Expr {
-                            expr: Type::Number(current),
+                            expr: Type::Number(Fraction::new(current)),
                             annotate: None,
                         });
                         current += 1.0;
@@ -463,13 +468,13 @@ pub fn builtin_function() -> Scope {
                     Ok(Type::List(range))
                 } else if params.len() == 3 {
                     let mut range: Vec<Expr> = vec![];
-                    let mut current: f64 = params[0].get_number();
-                    while current < params[1].get_number() {
+                    let mut current: f64 = params[0].get_number().to_f64();
+                    while current < params[1].get_number().to_f64() {
                         range.push(Expr {
-                            expr: Type::Number(current),
+                            expr: Type::Number(Fraction::new(current)),
                             annotate: None,
                         });
-                        current += params[2].get_number();
+                        current += params[2].get_number().to_f64();
                     }
                     Ok(Type::List(range))
                 } else {
@@ -586,7 +591,9 @@ pub fn builtin_function() -> Scope {
             "len".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() == 1 {
-                    Ok(Type::Number(params[0].get_list().len() as f64))
+                    Ok(Type::Number(Fraction::new(
+                        params[0].get_list().len() as f64
+                    )))
                 } else {
                     Err(GradiaError::Function(params.len(), 1))
                 }
@@ -599,7 +606,7 @@ pub fn builtin_function() -> Scope {
                     Ok(Type::String(
                         params[0]
                             .get_string()
-                            .repeat(params[1].get_number() as usize),
+                            .repeat(params[1].get_number().to_f64() as usize),
                     ))
                 } else {
                     Err(GradiaError::Function(params.len(), 2))
@@ -645,7 +652,13 @@ pub fn builtin_function() -> Scope {
         (
             "exit".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
-                exit(params.get(0).unwrap_or(&Type::Number(0.0)).get_number() as i32)
+                exit(
+                    params
+                        .get(0)
+                        .unwrap_or(&Type::Number(Fraction::new(0.0)))
+                        .get_number()
+                        .to_f64() as i32,
+                )
             })),
         ),
         ("new-line".to_string(), Type::String("\n".to_string())),
@@ -677,7 +690,7 @@ pub fn parse(token: (String, Option<String>)) -> Result<Expr, GradiaError> {
             "list" => Some(Type::List(vec![])),
             "symbol" => Some(Type::Symbol(String::new())),
             "string" => Some(Type::String(String::new())),
-            "number" => Some(Type::Number(0.0)),
+            "number" => Some(Type::Number(Fraction::new(0.0))),
             "bool" => Some(Type::Bool(false)),
             "null" => Some(Type::Null),
             "any" => None,
@@ -695,6 +708,12 @@ pub fn parse(token: (String, Option<String>)) -> Result<Expr, GradiaError> {
     Ok(
         // Number case
         if let Ok(n) = token.parse::<f64>() {
+            Expr {
+                expr: Type::Number(Fraction::new(n)),
+                annotate,
+            }
+        // Fraction case
+        } else if let Some(n) = Fraction::from(token.clone()) {
             Expr {
                 expr: Type::Number(n),
                 annotate,
@@ -990,7 +1009,7 @@ pub enum Type {
     Expr(Vec<Expr>),
     List(Vec<Expr>),
     Symbol(String),
-    Number(f64),
+    Number(Fraction),
     String(String),
     Bool(bool),
     Null,
@@ -1003,27 +1022,29 @@ pub enum Function {
 }
 
 impl Type {
-    pub fn get_number(&self) -> f64 {
+    pub fn get_number(&self) -> Fraction {
         match &self {
             Type::Number(n) => n.to_owned(),
-            Type::String(s) | Type::Symbol(s) => s.trim().parse().unwrap_or(0.0),
+            Type::String(s) | Type::Symbol(s) => {
+                Fraction::from(s.to_string()).unwrap_or(Fraction::new(0.0))
+            }
             Type::Bool(b) => {
                 if *b {
-                    1.0
+                    Fraction::new(1.0)
                 } else {
-                    0.0
+                    Fraction::new(0.0)
                 }
             }
             Type::Expr(x) | Type::List(x) => {
                 x.get(0).cloned().unwrap_or_default().expr.get_number()
             }
-            Type::Function(_) | Type::Null => 0.0,
+            Type::Function(_) | Type::Null => Fraction::new(0.0),
         }
     }
 
     pub fn get_string(&self) -> String {
         match &self {
-            Type::Number(n) => n.to_string(),
+            Type::Number(n) => n.display(),
             Type::String(s) => s.to_owned(),
             Type::Bool(b) => b.to_string(),
             Type::Symbol(v) => v.to_owned(),
@@ -1033,7 +1054,7 @@ impl Type {
 
     pub fn get_bool(&self) -> bool {
         match &self {
-            Type::Number(n) => *n != 0.0,
+            Type::Number(n) => *n != Fraction::new(0.0),
             Type::String(s) | Type::Symbol(s) => !s.is_empty(),
             Type::Expr(s) | Type::List(s) => !s.is_empty(),
             Type::Bool(b) => *b,
@@ -1070,7 +1091,7 @@ impl Debug for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let fmt = match &self {
             Type::String(s) => format!("\"{s}\""),
-            Type::Number(n) => n.to_string(),
+            Type::Number(n) => n.display(),
             Type::Bool(b) => b.to_string(),
             Type::Function(Function::UserDefined(args, code)) => {
                 format!(
@@ -1110,5 +1131,205 @@ impl Debug for Type {
 impl Default for Type {
     fn default() -> Self {
         Type::Null
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Fraction {
+    numerator: isize,
+    denominator: isize,
+}
+
+impl Fraction {
+    fn new(number: f64) -> Self {
+        fn convert(number: f64) -> (isize, isize) {
+            const MAX_DENOMINATOR: isize = 1_000_000;
+
+            if number == 0.0 {
+                return (0, 1);
+            }
+
+            let mut best_numerator = 0;
+            let mut best_denominator = 1;
+            let mut best_diff = f64::MAX;
+
+            for denominator in 1..=MAX_DENOMINATOR {
+                let numerator = (number * denominator as f64).round() as isize;
+                let fraction = numerator as f64 / denominator as f64;
+                let diff = (number - fraction).abs();
+
+                if diff < best_diff {
+                    best_diff = diff;
+                    best_numerator = numerator;
+                    best_denominator = denominator;
+
+                    if diff == 0.0 {
+                        break;
+                    }
+                }
+            }
+
+            (best_numerator, best_denominator)
+        }
+
+        let result = convert(number);
+        let mut frac = Fraction {
+            numerator: result.0,
+            denominator: result.1,
+        };
+
+        frac.simplify();
+        frac
+    }
+
+    fn from(value: String) -> Option<Fraction> {
+        let (numerator, denominator) = value.split_once("/")?;
+
+        let mut fraction = Fraction {
+            numerator: if let Ok(i) = numerator.parse() {
+                i
+            } else {
+                return None;
+            },
+            denominator: if let Ok(i) = denominator.parse() {
+                i
+            } else {
+                return None;
+            },
+        };
+        fraction.simplify();
+        Some(fraction)
+    }
+
+    fn display(&self) -> String {
+        let mut selfs = self.clone();
+        selfs.simplify();
+
+        if selfs.denominator == 1 {
+            selfs.numerator.to_string()
+        } else {
+            format!("{}/{}", selfs.numerator, selfs.denominator)
+        }
+    }
+
+    // Function to simplify the fraction
+    fn simplify(&mut self) {
+        // Function to find the greatest common divisor (GCD) using Euclid's algorithm
+        fn gcd(mut a: isize, mut b: isize) -> isize {
+            while b != 0 {
+                let temp = b;
+                b = a % b;
+                a = temp;
+            }
+            a
+        }
+
+        let gcd = gcd(self.numerator.abs(), self.denominator.abs());
+        self.numerator /= gcd;
+        self.denominator /= gcd;
+    }
+
+    // Function to convert the fraction to a floating-point number
+    fn to_f64(&self) -> f64 {
+        (self.numerator / self.denominator) as f64
+    }
+}
+
+impl Add for Fraction {
+    type Output = Fraction;
+
+    fn add(self, other: Fraction) -> Fraction {
+        let number = other;
+        fn lcm(a: isize, b: isize) -> isize {
+            let gcd = |mut a: isize, mut b: isize| {
+                while b != 0 {
+                    let temp = b;
+                    b = a % b;
+                    a = temp;
+                }
+                a
+            };
+
+            (a * b) / gcd(a, b)
+        }
+
+        let denominator = lcm(self.denominator, number.denominator);
+        let numerator1 = self.numerator * (denominator / self.denominator);
+        let numerator2 = other.numerator * (denominator / other.denominator);
+
+        let mut result = Fraction {
+            numerator: numerator1 + numerator2,
+            denominator,
+        };
+        result.simplify();
+        result
+    }
+}
+
+impl Sub for Fraction {
+    type Output = Fraction;
+
+    fn sub(self, other: Fraction) -> Fraction {
+        let number = other;
+        fn lcm(a: isize, b: isize) -> isize {
+            let gcd = |mut a: isize, mut b: isize| {
+                while b != 0 {
+                    let temp = b;
+                    b = a % b;
+                    a = temp;
+                }
+                a
+            };
+
+            (a * b) / gcd(a, b)
+        }
+
+        let denominator = lcm(self.denominator, number.denominator);
+        let numerator1 = self.numerator * (denominator / self.denominator);
+        let numerator2 = other.numerator * (denominator / other.denominator);
+
+        let mut result = Fraction {
+            numerator: numerator1 - numerator2,
+            denominator,
+        };
+        result.simplify();
+        result
+    }
+}
+
+impl Mul for Fraction {
+    type Output = Fraction;
+
+    fn mul(self, other: Fraction) -> Fraction {
+        let number = other;
+        let mut result = Fraction {
+            numerator: self.numerator * number.numerator,
+            denominator: self.denominator * number.denominator,
+        };
+        result.simplify();
+        result
+    }
+}
+
+impl Div for Fraction {
+    type Output = Fraction;
+
+    fn div(self, other: Fraction) -> Fraction {
+        let mut number = other;
+        (number.denominator, number.numerator) = (number.numerator, number.denominator);
+
+        let mut result = self * number;
+        result.simplify();
+        result
+    }
+}
+
+impl PartialEq for Fraction {
+    fn eq(&self, other: &Fraction) -> bool {
+        let mut selfs = self.clone();
+        let mut other = other.clone();
+        selfs.simplify();
+        other.simplify();
+        self.denominator == other.denominator && self.numerator == other.numerator
     }
 }
