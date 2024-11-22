@@ -10,14 +10,14 @@ const VERSION: &str = "0.1.0";
     name = "Gradia",
     version = VERSION,
     author = "梶塚太智, kajizukataichi@outlook.jp",
-    about = "Lisp like programming language that can add type annotation",
+    about = "Lisp like programming language that can give type annotation for gradual typing",
 )]
 struct Cli {
     /// Script file to be running
     #[arg(index = 1)]
     file: Option<String>,
 
-    /// Run the code quickly
+    /// Run code quickly
     #[arg(short = 'l', long, name = "CODE")]
     one_liner: Option<String>,
 }
