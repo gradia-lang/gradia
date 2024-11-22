@@ -1,5 +1,9 @@
 use clap::Parser;
-use gradia_core::{builtin_function, parse, tokenize, Scope};
+use gradia_core::{
+    parser::{parse, tokenize},
+    std::builtin_function,
+    types::Scope,
+};
 use rustyline::DefaultEditor;
 use std::fs::read_to_string;
 

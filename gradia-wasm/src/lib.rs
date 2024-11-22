@@ -1,4 +1,8 @@
-use gradia_core::{builtin_function, parse, tokenize, Function, Type};
+use gradia_core::{
+    parser::{parse, tokenize},
+    std::builtin_function,
+    types::{Function, Type},
+};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
