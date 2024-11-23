@@ -273,25 +273,11 @@ pub fn builtin_function() -> Scope {
             "cast".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() == 2 {
-                    match params
-                        .get(1)
-                        .cloned()
-                        .unwrap_or_default()
-                        .get_string()
-                        .as_str()
-                    {
-                        "number" => Ok(Type::Number(
-                            params.get(0).cloned().unwrap_or_default().get_number(),
-                        )),
-                        "string" => Ok(Type::String(
-                            params.get(0).cloned().unwrap_or_default().get_string(),
-                        )),
-                        "bool" => Ok(Type::Bool(
-                            params.get(0).cloned().unwrap_or_default().get_bool(),
-                        )),
-                        "list" => Ok(Type::List(
-                            params.get(0).cloned().unwrap_or_default().get_list(),
-                        )),
+                    match params[1].get_string().as_str() {
+                        "number" => Ok(Type::Number(params[0].get_number())),
+                        "string" => Ok(Type::String(params[0].get_string())),
+                        "bool" => Ok(Type::Bool(params[0].get_bool())),
+                        "list" => Ok(Type::List(params[0].get_list())),
                         other => Err(GradiaError::Runtime(format!("unknown type name `{other}`"))),
                     }
                 } else {
@@ -303,9 +289,7 @@ pub fn builtin_function() -> Scope {
             "type".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() == 1 {
-                    Ok(Type::String(
-                        params.get(0).cloned().unwrap_or_default().get_type(),
-                    ))
+                    Ok(Type::String(params[0].get_type()))
                 } else {
                     Err(GradiaError::Function(params.len(), 1))
                 }
@@ -330,21 +314,15 @@ pub fn builtin_function() -> Scope {
             Type::Function(Function::BuiltIn(|params, scope| {
                 let value: Type;
                 if params.len() >= 2 {
-                    if let Type::List(args) = params.get(0).cloned().unwrap_or_default() {
+                    if let Type::List(args) = params[0].clone() {
                         value = Type::Function(Function::UserDefined(
-                            args.get(1..).unwrap_or_default().to_vec(),
-                            params.get(1..).unwrap_or_default().to_owned(),
+                            args[1..].to_vec(),
+                            params[1..].to_owned(),
                         ));
-                        scope.insert(
-                            args.get(0).cloned().unwrap_or_default().expr.get_string(),
-                            value.clone(),
-                        );
+                        scope.insert(args[0].expr.get_string(), value.clone());
                     } else {
-                        value = params.get(1).cloned().unwrap_or_default().to_owned();
-                        scope.insert(
-                            params.get(0).cloned().unwrap_or_default().get_string(),
-                            value.clone(),
-                        );
+                        value = params[1].to_owned();
+                        scope.insert(params[0].get_string(), value.clone());
                     }
                 } else {
                     return Err(GradiaError::Function(params.len(), 2));
@@ -641,6 +619,48 @@ pub fn builtin_function() -> Scope {
                             })
                             .collect::<Vec<Expr>>(),
                     ))
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
+            })),
+        ),
+        (
+            "error".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                Err(GradiaError::Runtime(
+                    params
+                        .get(0)
+                        .unwrap_or(&Type::String("Something went wrong".to_string()))
+                        .get_string(),
+                ))
+            })),
+        ),
+        (
+            "try".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                let tried = if let Type::List(expr) = params[0].clone() {
+                    Expr {
+                        expr: Type::Expr(expr),
+                        annotate: None,
+                    }
+                    .eval(scope)
+                } else {
+                    Ok(params[0].clone())
+                };
+                if params.len() == 2 {
+                    if let Ok(result) = tried {
+                        Ok(result)
+                    } else {
+                        if let Type::List(expr) = params[1].clone() {
+                            Expr {
+                                expr: Type::Expr(expr),
+                                annotate: None,
+                            }
+                            .eval(scope)
+                        } else {
+                            Ok(params[1].clone())
+                        }
+                    }
                 } else {
                     Err(GradiaError::Function(params.len(), 2))
                 }
