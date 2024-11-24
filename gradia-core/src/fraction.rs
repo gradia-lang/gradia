@@ -52,12 +52,12 @@ impl Fraction {
         let (numerator, denominator) = value.split_once("/")?;
 
         let mut fraction = Fraction {
-            numerator: if let Ok(i) = numerator.parse() {
+            numerator: if let Ok(i) = numerator.trim().parse() {
                 i
             } else {
                 return None;
             },
-            denominator: if let Ok(i) = denominator.parse() {
+            denominator: if let Ok(i) = denominator.trim().parse() {
                 i
             } else {
                 return None;
