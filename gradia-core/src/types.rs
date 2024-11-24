@@ -27,9 +27,8 @@ impl Type {
     pub fn get_number(&self) -> Fraction {
         match &self {
             Type::Number(n) => n.to_owned(),
-            Type::String(s) | Type::Symbol(s) => {
-                Fraction::from(s.to_string()).unwrap_or(Fraction::new(0.0))
-            }
+            Type::String(s) | Type::Symbol(s) => Fraction::from(s.to_string())
+                .unwrap_or(Fraction::new(s.trim().parse().unwrap_or(0.0))),
             Type::Bool(b) => {
                 if *b {
                     Fraction::new(1.0)
