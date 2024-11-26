@@ -128,6 +128,15 @@ pub fn builtin_function() -> Scope {
             })),
         ),
         (
+            "debug".to_string(),
+            Type::Function(Function::BuiltIn(|params, _| {
+                for i in params {
+                    println!("Debug: {:?}", i);
+                }
+                Ok(Type::Null)
+            })),
+        ),
+        (
             "input".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() <= 1 {
