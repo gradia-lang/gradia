@@ -1,25 +1,11 @@
 use crate::expr::{Expr, GradiaError};
 use crate::fraction::Fraction;
-use crate::types::{Function, Type};
+use crate::types::{Class, Type};
 
 pub fn parse(token: (String, Option<String>)) -> Result<Expr, GradiaError> {
     // Setting type annotation
     let annotate = if let Some(annotate) = token.1 {
-        match annotate.as_str() {
-            "function" => Some(Type::Function(Function::BuiltIn(|_, _| Ok(Type::Null)))),
-            "list" => Some(Type::List(vec![])),
-            "symbol" => Some(Type::Symbol(String::new())),
-            "string" => Some(Type::String(String::new())),
-            "number" => Some(Type::Number(Fraction::new(0.0))),
-            "bool" => Some(Type::Bool(false)),
-            "null" => Some(Type::Null),
-            "any" => None,
-            other => {
-                return Err(GradiaError::Syntax(format!(
-                    "unknown type annotation `{other}`"
-                )))
-            }
-        }
+        Class::from(annotate)?
     } else {
         None
     };

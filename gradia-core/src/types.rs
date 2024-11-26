@@ -23,6 +23,17 @@ pub enum Function {
     UserDefined(Vec<Expr>, Vec<Type>),
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum Class {
+    Function,
+    List,
+    Symbol,
+    Number,
+    String,
+    Bool,
+    Null,
+}
+
 impl Type {
     pub fn get_number(&self) -> Fraction {
         match &self {
@@ -65,15 +76,16 @@ impl Type {
 
     pub fn get_type(&self) -> String {
         match &self {
-            Type::Number(_) => "number".to_string(),
-            Type::String(_) => "string".to_string(),
-            Type::Bool(_) => "bool".to_string(),
-            Type::Expr(_) => "expr".to_string(),
-            Type::Symbol(_) => "symbol".to_string(),
-            Type::List(_) => "list".to_string(),
-            Type::Null => "null".to_string(),
-            Type::Function(_) => "function".to_string(),
+            Type::Number(_) => "number",
+            Type::String(_) => "string",
+            Type::Bool(_) => "bool",
+            Type::Expr(_) => "expr",
+            Type::Symbol(_) => "symbol",
+            Type::List(_) => "list",
+            Type::Null => "null",
+            Type::Function(_) => "function",
         }
+        .to_string()
     }
 
     pub fn get_list(&self) -> Vec<Expr> {
@@ -85,6 +97,30 @@ impl Type {
                 annotate: None,
             }],
         }
+    }
+}
+
+impl Class {
+    pub fn from(source: String) -> Result<Option<Class>, GradiaError> {
+        Ok(match source.as_str() {
+            "function" => Some(Class::Function),
+            "list" => Some(Class::List),
+            "symbol" => Some(Class::Symbol),
+            "number" => Some(Class::Number),
+            "string" => Some(Class::String),
+            "bool" => Some(Class::Bool),
+            "null" => Some(Class::Null),
+            "any" => None,
+            other => {
+                return Err(GradiaError::Syntax(format!(
+                    "unknown type annotation `{other}`"
+                )))
+            }
+        })
+    }
+
+    pub fn get_type(&self) -> String {
+        format!("{self:?}").to_lowercase()
     }
 }
 

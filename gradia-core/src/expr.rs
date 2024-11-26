@@ -1,4 +1,4 @@
-use crate::types::{Function, Scope, Type};
+use crate::types::{Class, Function, Scope, Type};
 use std::fmt::{self, Debug};
 use thiserror::Error;
 
@@ -20,7 +20,7 @@ pub enum GradiaError {
 #[derive(Clone)]
 pub struct Expr {
     pub expr: Type,
-    pub annotate: Option<Type>,
+    pub annotate: Option<Class>,
 }
 
 impl Expr {
