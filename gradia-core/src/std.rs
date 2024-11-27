@@ -487,6 +487,30 @@ pub fn builtin_function() -> Scope {
             })),
         ),
         (
+            "for".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                if params.len() == 2 {
+                    let func = params[1].clone();
+                    for i in params[0].get_list() {
+                        Expr {
+                            expr: Type::Expr(vec![
+                                Expr {
+                                    expr: func.clone(),
+                                    annotate: None,
+                                },
+                                i,
+                            ]),
+                            annotate: None,
+                        }
+                        .eval(scope)?;
+                    }
+                    Ok(Type::Null)
+                } else {
+                    Err(GradiaError::Function(params.len(), 2))
+                }
+            })),
+        ),
+        (
             "map".to_string(),
             Type::Function(Function::BuiltIn(|params, scope| {
                 if params.len() == 2 {
