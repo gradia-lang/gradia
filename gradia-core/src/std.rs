@@ -397,6 +397,26 @@ pub fn builtin_function() -> Scope {
             })),
         ),
         (
+            "cond".to_string(),
+            Type::Function(Function::BuiltIn(|params, scope| {
+                for i in params {
+                    if i.get_list()[0].eval(scope)?.get_bool() {
+                        let code = i.get_list()[1].eval(scope)?;
+                        return if let Type::List(expr) = code {
+                            Expr {
+                                expr: Type::Expr(expr),
+                                annotate: None,
+                            }
+                            .eval(scope)
+                        } else {
+                            Ok(code.clone())
+                        };
+                    }
+                }
+                Ok(Type::Null)
+            })),
+        ),
+        (
             "car".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() == 1 {
