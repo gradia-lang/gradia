@@ -119,6 +119,24 @@ impl Class {
         })
     }
 
+    pub fn parse(&self, value: Type) -> Type {
+        match self {
+            Class::Symbol => Type::Symbol(value.get_string()),
+            Class::Bool => Type::Bool(value.get_bool()),
+            Class::Number => Type::Number(value.get_number()),
+            Class::String => Type::String(value.get_string()),
+            Class::List => Type::List(value.get_list()),
+            Class::Null => Type::Null,
+            Class::Function => Type::Function(Function::BuiltIn(|params, _| {
+                if let Some(val) = params.get(0) {
+                    Ok(val.clone())
+                } else {
+                    Err(GradiaError::Function(params.len(), 1))
+                }
+            })),
+        }
+    }
+
     pub fn get_type(&self) -> String {
         format!("{self:?}").to_lowercase()
     }

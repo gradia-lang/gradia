@@ -1,6 +1,6 @@
 use crate::expr::{Expr, GradiaError};
 use crate::fraction::Fraction;
-use crate::types::{Function, Scope, Type};
+use crate::types::{Class, Function, Scope, Type};
 use std::collections::HashMap;
 use std::io::{self, Write};
 use std::process::exit;
@@ -282,13 +282,10 @@ pub fn builtin_function() -> Scope {
             "cast".to_string(),
             Type::Function(Function::BuiltIn(|params, _| {
                 if params.len() == 2 {
-                    match params[1].get_string().as_str() {
-                        "number" => Ok(Type::Number(params[0].get_number())),
-                        "string" => Ok(Type::String(params[0].get_string())),
-                        "bool" => Ok(Type::Bool(params[0].get_bool())),
-                        "list" => Ok(Type::List(params[0].get_list())),
-                        other => Err(GradiaError::Runtime(format!("unknown type name `{other}`"))),
-                    }
+                    Ok(match Class::from(params[1].get_string())? {
+                        Some(typed) => typed.parse(params[0].clone()),
+                        None => params[0].clone(),
+                    })
                 } else {
                     Err(GradiaError::Function(params.len(), 2))
                 }
